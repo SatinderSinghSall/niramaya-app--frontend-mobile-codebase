@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -369,6 +370,27 @@ export default function SleepScreen() {
 
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    const keyboardDidShowSubscription = Keyboard.addListener(
+      "keyboardDidShow",
+      (event) => setKeyboardHeight(event.endCoordinates.height),
+    );
+
+    const keyboardDidHideSubscription = Keyboard.addListener(
+      "keyboardDidHide",
+      () => setKeyboardHeight(0),
+    );
+
+    return () => {
+      keyboardDidShowSubscription.remove();
+      keyboardDidHideSubscription.remove();
+    };
+  }, []);
+
   /* =======================================================
      BEDTIME
   ======================================================= */
@@ -467,19 +489,17 @@ export default function SleepScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={0}
       >
         <ScrollView
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={
-            Platform.OS === "ios" ? "interactive" : "on-drag"
-          }
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 24,
             paddingTop: 16,
-            paddingBottom: 24,
+            paddingBottom: Platform.OS === "android" ? keyboardHeight + 24 : 24,
           }}
         >
           {/* =================================================

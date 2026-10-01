@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   ActivityIndicator,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -34,6 +35,38 @@ export default function SignupScreen() {
 
   const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ---------------------------------
+  // Android keyboard height
+  // ---------------------------------
+
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    // Keep iOS completely unchanged
+    if (Platform.OS !== "android") {
+      return;
+    }
+
+    const keyboardDidShowSubscription = Keyboard.addListener(
+      "keyboardDidShow",
+      (event) => {
+        setKeyboardHeight(event.endCoordinates.height);
+      },
+    );
+
+    const keyboardDidHideSubscription = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      },
+    );
+
+    return () => {
+      keyboardDidShowSubscription.remove();
+      keyboardDidHideSubscription.remove();
+    };
+  }, []);
 
   /* ---------------------------------
      Validation
@@ -153,11 +186,11 @@ export default function SignupScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
           contentContainerStyle={{
-            paddingBottom: 40,
+            paddingBottom: Platform.OS === "android" ? keyboardHeight + 40 : 40,
           }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -225,37 +258,49 @@ export default function SignupScreen() {
 
             {generalError ? (
               <View className="mb-6">
-                {/* Error heading */}
-                <View className="flex-row items-center">
-                  {/* Error icon */}
-                  <View className="h-8 w-8 items-center justify-center rounded-full bg-[#FBE5E2]">
-                    <Ionicons name="alert-circle" size={18} color="#B65D54" />
+                {/* Error card */}
+                <View className="rounded-[14px] border border-[#F1D5D1] bg-[#FFF8F7] px-3.5 py-3">
+                  <View className="flex-row items-center">
+                    {/* Error icon */}
+                    <View className="h-9 w-9 items-center justify-center rounded-full bg-[#FBE5E2]">
+                      <Ionicons name="alert-circle" size={19} color="#B65D54" />
+                    </View>
+
+                    {/* Error heading */}
+                    <View className="ml-3 flex-1">
+                      <Text className="text-[13px] font-bold text-[#8F4943]">
+                        Sign up failed
+                      </Text>
+
+                      <Text className="mt-0.5 text-[11px] text-[#B06A64]">
+                        Please check your details and try again.
+                      </Text>
+                    </View>
+
+                    {/* Close error */}
+                    <Pressable
+                      onPress={() => setGeneralError("")}
+                      disabled={loading}
+                      hitSlop={10}
+                      className="ml-2 h-8 w-8 items-center justify-center rounded-full bg-[#FBE5E2]"
+                      style={({ pressed }) => ({
+                        opacity: loading ? 0.45 : pressed ? 0.6 : 1,
+                      })}
+                    >
+                      <Ionicons name="close" size={17} color="#9D514A" />
+                    </Pressable>
                   </View>
 
-                  {/* Error title */}
-                  <Text className="ml-2.5 flex-1 text-[14px] font-bold text-[#9D514A]">
-                    Sign up failed
-                  </Text>
+                  {/* Actual error message */}
+                  <View className="mt-3 ml-[42px] flex-row items-start">
+                    <View className="mt-[2px] h-4 w-4 items-center justify-center rounded-full bg-[#FBE5E2]">
+                      <Ionicons name="information" size={10} color="#A85C55" />
+                    </View>
 
-                  {/* Close error */}
-                  <Pressable
-                    onPress={() => setGeneralError("")}
-                    disabled={loading}
-                    hitSlop={10}
-                    className="h-8 w-8 items-center justify-center rounded-full"
-                    style={({ pressed }) => ({
-                      opacity: loading ? 0.45 : pressed ? 0.6 : 1,
-                    })}
-                  >
-                    <Ionicons name="close" size={19} color="#9D514A" />
-                  </Pressable>
-                </View>
-
-                {/* Error message */}
-                <View className="ml-[42px] mt-2.5">
-                  <Text className="text-[12px] leading-[18px] text-[#A96761]">
-                    {generalError}
-                  </Text>
+                    <Text className="ml-2 flex-1 text-[11.5px] font-medium leading-[17px] text-[#9F625C]">
+                      {generalError}
+                    </Text>
+                  </View>
                 </View>
               </View>
             ) : null}

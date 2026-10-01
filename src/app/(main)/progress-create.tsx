@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -369,6 +370,38 @@ export default function ProgressCreateScreen() {
     [isEditing],
   );
 
+  // ---------------------------------
+  // Android keyboard handling
+  // ---------------------------------
+
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    // Keep iOS behavior completely unchanged
+    if (Platform.OS !== "android") {
+      return;
+    }
+
+    const keyboardDidShowSubscription = Keyboard.addListener(
+      "keyboardDidShow",
+      (event) => {
+        setKeyboardHeight(event.endCoordinates.height);
+      },
+    );
+
+    const keyboardDidHideSubscription = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      },
+    );
+
+    return () => {
+      keyboardDidShowSubscription.remove();
+      keyboardDidHideSubscription.remove();
+    };
+  }, []);
+
   useEffect(() => {
     if (!editingId) {
       return;
@@ -676,7 +709,7 @@ export default function ProgressCreateScreen() {
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background">
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {/*  Header  */}
 
@@ -703,8 +736,7 @@ export default function ProgressCreateScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 20,
-
-            paddingBottom: 40,
+            paddingBottom: Platform.OS === "android" ? keyboardHeight + 40 : 40,
           }}
         >
           {/*  Error  */}
