@@ -1,10 +1,30 @@
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { Platform, StyleSheet, View } from "react-native";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DrawerProvider } from "@/components/navigation/DrawerContext";
 import AppDrawer from "@/components/navigation/AppDrawer";
+
+/**
+ * ============================================================
+ * COLORS
+ * ============================================================
+ */
+
+const COLORS = {
+  green: "#15803D",
+  greenLight: "#E8F7EE",
+  inactive: "#94A3B8",
+  white: "#FFFFFF",
+  border: "#E8ECE9",
+};
+
+/**
+ * ============================================================
+ * STANDARD TAB ICON
+ * ============================================================
+ */
 
 type TabIconProps = {
   focused: boolean;
@@ -14,72 +34,131 @@ type TabIconProps = {
 
 function TabIcon({ focused, activeIcon, inactiveIcon }: TabIconProps) {
   return (
-    <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
+    <View
+      className={`h-[34px] w-[42px] items-center justify-center rounded-full ${
+        focused ? "bg-[#E8F7EE]" : "bg-transparent"
+      }`}
+    >
       <Ionicons
         name={focused ? activeIcon : inactiveIcon}
-        size={21}
-        color={focused ? "#15803D" : "#94A3B8"}
+        size={22}
+        color={focused ? COLORS.green : COLORS.inactive}
       />
     </View>
   );
 }
 
+/**
+ * ============================================================
+ * YOGA TAB ICON
+ * ============================================================
+ */
+
+function YogaTabIcon({ focused }: { focused: boolean }) {
+  return (
+    <View
+      className={`h-[34px] w-[42px] items-center justify-center rounded-full ${
+        focused ? "bg-[#E8F7EE]" : "bg-transparent"
+      }`}
+    >
+      <MaterialCommunityIcons
+        name="yoga"
+        size={23}
+        color={focused ? COLORS.green : COLORS.inactive}
+      />
+    </View>
+  );
+}
+
+/**
+ * ============================================================
+ * MAIN LAYOUT
+ * ============================================================
+ */
+
 export default function MainLayout() {
   const insets = useSafeAreaInsets();
 
-  /*
-   * Base height of the actual navigation content.
+  /**
+   * The actual navigation content.
    *
-   * The safe-area inset is added separately so the navigation
-   * never sits underneath:
+   * 62px = icon + label + comfortable touch area.
    *
-   * - Android gesture navigation
-   * - Android 3-button navigation
-   * - iPhone home indicator
+   * Safe-area inset is added separately so:
+   *
+   * iOS:
+   * - Home indicator has space
+   *
+   * Android:
+   * - Gesture navigation has space
+   * - 3-button navigation has space
    */
-  const baseTabBarHeight = Platform.OS === "ios" ? 56 : 58;
+  const tabContentHeight = 62;
 
-  const bottomSafeArea = insets.bottom;
-
-  const tabBarHeight = baseTabBarHeight + bottomSafeArea;
+  const tabBarHeight = tabContentHeight + insets.bottom;
 
   return (
     <DrawerProvider>
-      <View className="flex-1">
+      <View className="flex-1 bg-white">
         <Tabs
           screenOptions={{
+            /**
+             * ==================================================
+             * HEADER
+             * ==================================================
+             */
+
             headerShown: false,
+
+            /**
+             * ==================================================
+             * TAB LABEL
+             * ==================================================
+             */
 
             tabBarShowLabel: true,
 
-            tabBarActiveTintColor: "#15803D",
-            tabBarInactiveTintColor: "#94A3B8",
+            tabBarActiveTintColor: COLORS.green,
+            tabBarInactiveTintColor: COLORS.inactive,
 
-            /*
-             * SAFE-AREA-AWARE BOTTOM NAVIGATION
+            /**
+             * ==================================================
+             * BOTTOM NAVIGATION
+             * ==================================================
+             *
+             * IMPORTANT:
+             *
+             * No absolute positioning.
+             * No floating margins.
+             *
+             * This stays attached to the bottom of the screen.
              */
+
             tabBarStyle: {
               height: tabBarHeight,
 
-              paddingTop: 7,
+              paddingTop: 5,
 
-              /*
-               * The system safe-area belongs here.
+              /**
+               * Safe area is handled inside the tab bar.
                */
-              paddingBottom: bottomSafeArea + 5,
+              paddingBottom: insets.bottom + 3,
 
-              backgroundColor: "#FFFFFF",
+              backgroundColor: COLORS.white,
 
-              borderTopWidth: 1,
-              borderTopColor: "#E8ECE9",
+              /**
+               * Clean divider at the top.
+               */
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: COLORS.border,
 
-              /*
-               * Android elevation
+              /**
+               * Android
                */
               elevation: 8,
 
-              /*
-               * iOS shadow
+              /**
+               * iOS
                */
               shadowColor: "#17211B",
               shadowOffset: {
@@ -90,25 +169,52 @@ export default function MainLayout() {
               shadowRadius: 8,
             },
 
+            /**
+             * ==================================================
+             * TAB ITEM
+             * ==================================================
+             */
+
             tabBarItemStyle: {
-              paddingVertical: 0,
+              paddingTop: 0,
+              paddingBottom: 0,
+
+              /**
+               * Gives every tab equal vertical alignment.
+               */
+              height: tabContentHeight,
             },
+
+            /**
+             * ==================================================
+             * LABEL
+             * ==================================================
+             */
 
             tabBarLabelStyle: {
               fontSize: 11,
               fontWeight: "600",
+
+              /**
+               * Keeps text visually close to the icon.
+               */
               marginTop: 2,
+
+              lineHeight: 14,
             },
 
-            /*
-             * Prevent keyboard from making the navigation behave badly.
+            /**
+             * ==================================================
+             * KEYBOARD
+             * ==================================================
              */
+
             tabBarHideOnKeyboard: true,
           }}
         >
-          {/* ========================= */}
+          {/* ================================================== */}
           {/* HOME */}
-          {/* ========================= */}
+          {/* ================================================== */}
 
           <Tabs.Screen
             name="home"
@@ -125,9 +231,9 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
+          {/* ================================================== */}
           {/* EXPLORE */}
-          {/* ========================= */}
+          {/* ================================================== */}
 
           <Tabs.Screen
             name="explore"
@@ -144,9 +250,41 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
+          {/* ================================================== */}
+          {/* YOGA */}
+          {/* ================================================== */}
+
+          <Tabs.Screen
+            name="yoga"
+            options={{
+              title: "Yoga",
+
+              tabBarIcon: ({ focused }) => <YogaTabIcon focused={focused} />,
+            }}
+          />
+
+          {/* ================================================== */}
+          {/* AYURVEDA */}
+          {/* ================================================== */}
+
+          <Tabs.Screen
+            name="ayurveda"
+            options={{
+              title: "Ayurveda",
+
+              tabBarIcon: ({ focused }) => (
+                <TabIcon
+                  focused={focused}
+                  activeIcon="leaf"
+                  inactiveIcon="leaf-outline"
+                />
+              ),
+            }}
+          />
+
+          {/* ================================================== */}
           {/* PROFILE */}
-          {/* ========================= */}
+          {/* ================================================== */}
 
           <Tabs.Screen
             name="profile"
@@ -163,11 +301,12 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
+          {/* ================================================== */}
           {/* HIDDEN SCREENS */}
-          {/* ========================= */}
+          {/* ================================================== */}
 
-          {/* Goal Screen */}
+          {/* GOALS */}
+
           <Tabs.Screen
             name="goals"
             options={{
@@ -175,7 +314,6 @@ export default function MainLayout() {
             }}
           />
 
-          {/* Goal Creation */}
           <Tabs.Screen
             name="goal-create"
             options={{
@@ -183,7 +321,6 @@ export default function MainLayout() {
             }}
           />
 
-          {/* Goal Details */}
           <Tabs.Screen
             name="goals/[id]"
             options={{
@@ -191,16 +328,7 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
-          {/* YOGA */}
-          {/* ========================= */}
-
-          <Tabs.Screen
-            name="yoga"
-            options={{
-              href: null,
-            }}
-          />
+          {/* YOGA DETAILS */}
 
           <Tabs.Screen
             name="yoga/[id]"
@@ -209,16 +337,7 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
-          {/* AYURVEDA */}
-          {/* ========================= */}
-
-          <Tabs.Screen
-            name="ayurveda"
-            options={{
-              href: null,
-            }}
-          />
+          {/* AYURVEDA DETAILS */}
 
           <Tabs.Screen
             name="ayurveda/[id]"
@@ -227,9 +346,7 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
           {/* SEARCH */}
-          {/* ========================= */}
 
           <Tabs.Screen
             name="search"
@@ -238,9 +355,7 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
           {/* FAVORITES */}
-          {/* ========================= */}
 
           <Tabs.Screen
             name="favorites"
@@ -249,9 +364,9 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
+          {/* ================================================== */}
           {/* PROGRESS */}
-          {/* ========================= */}
+          {/* ================================================== */}
 
           <Tabs.Screen
             name="progress"
@@ -274,9 +389,9 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
+          {/* ================================================== */}
           {/* HEALTH PROFILE */}
-          {/* ========================= */}
+          {/* ================================================== */}
 
           <Tabs.Screen
             name="health-profile"
@@ -292,9 +407,9 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
+          {/* ================================================== */}
           {/* CONSULTATION */}
-          {/* ========================= */}
+          {/* ================================================== */}
 
           <Tabs.Screen
             name="consultation/[id]"
@@ -324,9 +439,9 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
+          {/* ================================================== */}
           {/* NOTIFICATIONS */}
-          {/* ========================= */}
+          {/* ================================================== */}
 
           <Tabs.Screen
             name="notifications"
@@ -335,9 +450,9 @@ export default function MainLayout() {
             }}
           />
 
-          {/* ========================= */}
-          {/* PROFILE & SETTINGS */}
-          {/* ========================= */}
+          {/* ================================================== */}
+          {/* SETTINGS */}
+          {/* ================================================== */}
 
           <Tabs.Screen
             name="settings"
@@ -361,30 +476,12 @@ export default function MainLayout() {
           />
         </Tabs>
 
-        {/* ========================= */}
+        {/* ==================================================== */}
         {/* APP DRAWER */}
-        {/* ========================= */}
+        {/* ==================================================== */}
 
         <AppDrawer />
       </View>
     </DrawerProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  iconContainer: {
-    width: 44,
-    height: 30,
-
-    alignItems: "center",
-    justifyContent: "center",
-
-    borderRadius: 15,
-
-    backgroundColor: "transparent",
-  },
-
-  iconContainerActive: {
-    backgroundColor: "#E8F7EE",
-  },
-});
