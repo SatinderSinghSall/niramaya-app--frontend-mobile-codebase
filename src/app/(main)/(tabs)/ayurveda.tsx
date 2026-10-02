@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Image,
   RefreshControl,
   ScrollView,
@@ -9,8 +12,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { Ionicons } from "@expo/vector-icons";
+
 import { router, useFocusEffect } from "expo-router";
 
 import { getAyurveda, getAyurvedaCategories } from "@/services/explore.service";
@@ -18,31 +24,39 @@ import { getAyurveda, getAyurvedaCategories } from "@/services/explore.service";
 import { CategoryItem, ExploreItem } from "@/types/explore";
 
 import ExploreContentCard from "@/components/explore/ExploreContentCard";
-import ExploreEmptyState from "@/components/explore/ExploreEmptyState";
 
 /* -------------------------------------------------------------------------- */
+
 /* Colors                                                                     */
+
 /* -------------------------------------------------------------------------- */
 
 const COLORS = {
   background: "#F7F3EA",
+
   surface: "#FFFFFF",
 
   text: "#273128",
+
   muted: "#777C74",
+
   softMuted: "#A0A29B",
 
   green: "#4D6A50",
+
   darkGreen: "#31543B",
 
   lightGreen: "#DDE7D8",
+
   lighterGreen: "#EEF5EC",
 
   border: "#E5E0D6",
 };
 
 /* -------------------------------------------------------------------------- */
+
 /* Hero                                                                       */
+
 /* -------------------------------------------------------------------------- */
 
 const AYURVEDA_HERO = {
@@ -50,16 +64,23 @@ const AYURVEDA_HERO = {
 };
 
 /* -------------------------------------------------------------------------- */
+
 /* Category Helpers                                                           */
+
 /* -------------------------------------------------------------------------- */
 
 function getRawCategoryValue(category: CategoryItem, index: number) {
   const data = category as CategoryItem & {
     value?: string;
+
     name?: string;
+
     label?: string;
+
     slug?: string;
+
     key?: string;
+
     category?: string;
   };
 
@@ -78,10 +99,15 @@ function formatCategoryLabel(value?: string) {
   if (!value) return "";
 
   return value
+
     .replace(/_/g, " ")
+
     .replace(/-/g, " ")
+
     .replace(/\s+/g, " ")
+
     .trim()
+
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
@@ -96,7 +122,9 @@ function getItemCategory(item: ExploreItem) {
 }
 
 /* -------------------------------------------------------------------------- */
+
 /* Header                                                                     */
+
 /* -------------------------------------------------------------------------- */
 
 function AyurvedaHeader() {
@@ -108,6 +136,7 @@ function AyurvedaHeader() {
         className="mb-5 h-10 w-10 items-center justify-center rounded-full bg-white"
         style={{
           borderWidth: 1,
+
           borderColor: COLORS.border,
         }}
       >
@@ -127,6 +156,7 @@ function AyurvedaHeader() {
         className="mt-1 text-[30px] font-bold"
         style={{
           color: COLORS.text,
+
           fontFamily: "serif",
         }}
       >
@@ -147,16 +177,22 @@ function AyurvedaHeader() {
 }
 
 /* -------------------------------------------------------------------------- */
+
 /* Search                                                                     */
+
 /* -------------------------------------------------------------------------- */
 
 function AyurvedaSearch({
   value,
+
   onChangeText,
+
   onClear,
 }: {
   value: string;
+
   onChangeText: (value: string) => void;
+
   onClear: () => void;
 }) {
   return (
@@ -164,7 +200,9 @@ function AyurvedaSearch({
       className="mt-5 flex-row items-center rounded-[16px] bg-white px-4"
       style={{
         height: 50,
+
         borderWidth: 1,
+
         borderColor: COLORS.border,
       }}
     >
@@ -197,7 +235,9 @@ function AyurvedaSearch({
 }
 
 /* -------------------------------------------------------------------------- */
+
 /* Hero                                                                       */
+
 /* -------------------------------------------------------------------------- */
 
 function AyurvedaHero() {
@@ -206,6 +246,7 @@ function AyurvedaHero() {
       className="mt-5 overflow-hidden rounded-[22px]"
       style={{
         height: 205,
+
         backgroundColor: COLORS.lightGreen,
       }}
     >
@@ -246,7 +287,9 @@ function AyurvedaHero() {
 }
 
 /* -------------------------------------------------------------------------- */
+
 /* Intro                                                                      */
+
 /* -------------------------------------------------------------------------- */
 
 function AyurvedaIntroCard() {
@@ -272,6 +315,7 @@ function AyurvedaIntroCard() {
             className="text-[17px] font-bold"
             style={{
               color: COLORS.darkGreen,
+
               fontFamily: "serif",
             }}
           >
@@ -294,16 +338,22 @@ function AyurvedaIntroCard() {
 }
 
 /* -------------------------------------------------------------------------- */
+
 /* Category Button                                                            */
+
 /* -------------------------------------------------------------------------- */
 
 function CategoryButton({
   label,
+
   selected,
+
   onPress,
 }: {
   label: string;
+
   selected: boolean;
+
   onPress: () => void;
 }) {
   return (
@@ -313,10 +363,15 @@ function CategoryButton({
       className="mr-2 rounded-full px-4"
       style={{
         height: 38,
+
         alignItems: "center",
+
         justifyContent: "center",
+
         backgroundColor: selected ? COLORS.green : COLORS.surface,
+
         borderWidth: selected ? 0 : 1,
+
         borderColor: COLORS.border,
       }}
     >
@@ -334,19 +389,26 @@ function CategoryButton({
 }
 
 /* -------------------------------------------------------------------------- */
+
 /* Category Section                                                           */
+
 /* -------------------------------------------------------------------------- */
 
 function CategorySection({
   categories,
+
   selectedCategory,
+
   onSelect,
 }: {
   categories: {
     value: string;
+
     label: string;
   }[];
+
   selectedCategory: string | null;
+
   onSelect: (value: string | null) => void;
 }) {
   if (categories.length === 0) {
@@ -361,6 +423,7 @@ function CategorySection({
             className="text-[19px] font-bold"
             style={{
               color: COLORS.text,
+
               fontFamily: "serif",
             }}
           >
@@ -406,7 +469,9 @@ function CategorySection({
 }
 
 /* -------------------------------------------------------------------------- */
+
 /* Calm Visual Section                                                        */
+
 /* -------------------------------------------------------------------------- */
 
 function CalmStrip() {
@@ -416,6 +481,7 @@ function CalmStrip() {
         className="mr-1.5 flex-1 overflow-hidden rounded-[18px]"
         style={{
           height: 115,
+
           backgroundColor: "#D6E3D8",
         }}
       >
@@ -447,6 +513,7 @@ function CalmStrip() {
         className="ml-1.5 flex-1 overflow-hidden rounded-[18px]"
         style={{
           height: 115,
+
           backgroundColor: "#DDD6C5",
         }}
       >
@@ -478,11 +545,123 @@ function CalmStrip() {
 }
 
 /* -------------------------------------------------------------------------- */
+
+/* Skeleton + Empty State */
+
+function AyurvedaSkeleton() {
+  return (
+    <SafeAreaView
+      edges={["top"]}
+      className="flex-1"
+      style={{ backgroundColor: COLORS.background }}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 18,
+          paddingTop: 12,
+          paddingBottom: 32,
+        }}
+      >
+        <View className="mb-2">
+          <View className="h-10 w-10 rounded-full bg-[#E8E3D9]" />
+          <View className="mt-5 h-3 w-32 rounded bg-[#E8E3D9]" />
+          <View className="mt-2 h-9 w-32 rounded bg-[#E8E3D9]" />
+          <View className="mt-2 h-4 w-[84%] rounded bg-[#E8E3D9]" />
+          <View className="mt-1.5 h-4 w-[66%] rounded bg-[#E8E3D9]" />
+        </View>
+        <View className="mt-5 h-[50px] rounded-[16px] bg-[#EAE6DD]" />
+        <View className="mt-5 h-[205px] rounded-[22px] bg-[#E5E0D6]" />
+        <View className="mt-5 rounded-[18px] bg-[#E1E9DD] p-4">
+          <View className="flex-row items-center">
+            <View className="h-10 w-10 rounded-full bg-[#C9D8C3]" />
+            <View className="ml-3 flex-1">
+              <View className="h-5 w-40 rounded bg-[#C9D8C3]" />
+              <View className="mt-2 h-3 w-[88%] rounded bg-[#CBDAC5]" />
+              <View className="mt-1.5 h-3 w-[72%] rounded bg-[#CBDAC5]" />
+            </View>
+          </View>
+        </View>
+        <View className="mt-8">
+          <View className="h-6 w-44 rounded bg-[#E8E3D9]" />
+          <View className="mt-2 h-3 w-56 rounded bg-[#E8E3D9]" />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mt-3"
+          >
+            {[1, 2, 3, 4].map((item) => (
+              <View
+                key={item}
+                className="mr-2 h-[38px] w-20 rounded-full bg-[#E7E3DA]"
+              />
+            ))}
+          </ScrollView>
+        </View>
+        <View className="mt-9">
+          <View className="h-6 w-40 rounded bg-[#E8E3D9]" />
+          <View className="mt-2 h-3 w-32 rounded bg-[#E8E3D9]" />
+          {[1, 2, 3].map((item) => (
+            <View
+              key={item}
+              className="mt-4 rounded-[18px] bg-white p-4"
+              style={{ borderWidth: 1, borderColor: COLORS.border }}
+            >
+              <View className="h-32 rounded-[14px] bg-[#E9E5DC]" />
+              <View className="mt-3 h-4 w-[70%] rounded bg-[#E8E3D9]" />
+              <View className="mt-2 h-3 w-[92%] rounded bg-[#E8E3D9]" />
+              <View className="mt-1.5 h-3 w-[62%] rounded bg-[#E8E3D9]" />
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function AyurvedaEmptyState({ searched }: { searched: boolean }) {
+  return (
+    <View
+      className="rounded-[20px] bg-white px-5 py-8"
+      style={{ borderWidth: 1, borderColor: COLORS.border }}
+    >
+      <View className="items-center">
+        <View
+          className="h-14 w-14 items-center justify-center rounded-full"
+          style={{ backgroundColor: COLORS.lighterGreen }}
+        >
+          <Ionicons
+            name={searched ? "search-outline" : "leaf-outline"}
+            size={24}
+            color={COLORS.green}
+          />
+        </View>
+        <Text
+          className="mt-4 text-center text-[19px] font-bold"
+          style={{ color: COLORS.text, fontFamily: "serif" }}
+        >
+          {searched ? "Nothing found" : "No practices yet"}
+        </Text>
+        <Text
+          className="mt-2 max-w-[290px] text-center text-[12px] leading-5"
+          style={{ color: COLORS.muted }}
+        >
+          {searched
+            ? "Try a different search term or explore another practice."
+            : "Ayurvedic practices will appear here when they become available."}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 /* Main Screen                                                                */
+
 /* -------------------------------------------------------------------------- */
 
 export default function AyurvedaScreen() {
   const [items, setItems] = useState<ExploreItem[]>([]);
+
   const [categories, setCategories] = useState<CategoryItem[]>([]);
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -490,11 +669,16 @@ export default function AyurvedaScreen() {
   const [search, setSearch] = useState("");
 
   const [loading, setLoading] = useState(true);
+
   const [refreshing, setRefreshing] = useState(false);
+
   const [error, setError] = useState("");
+  const [retrying, setRetrying] = useState(false);
 
   /* ------------------------------------------------------------------------ */
+
   /* Load Ayurveda                                                             */
+
   /* ------------------------------------------------------------------------ */
 
   const loadAyurveda = useCallback(
@@ -509,13 +693,17 @@ export default function AyurvedaScreen() {
         const [ayurvedaData, categoryData] = await Promise.all([
           getAyurveda({
             category: category || undefined,
+
             page: 1,
+
             limit: 30,
           }),
+
           getAyurvedaCategories(),
         ]);
 
         setItems(ayurvedaData);
+
         setCategories(categoryData);
       } catch (err: any) {
         console.error("Ayurveda loading error:", err);
@@ -527,14 +715,18 @@ export default function AyurvedaScreen() {
         );
       } finally {
         setLoading(false);
+
         setRefreshing(false);
       }
     },
+
     [selectedCategory],
   );
 
   /* ------------------------------------------------------------------------ */
+
   /* Initial Load                                                              */
+
   /* ------------------------------------------------------------------------ */
 
   useEffect(() => {
@@ -542,7 +734,9 @@ export default function AyurvedaScreen() {
   }, []);
 
   /* ------------------------------------------------------------------------ */
+
   /* Refresh on Focus                                                          */
+
   /* ------------------------------------------------------------------------ */
 
   useFocusEffect(
@@ -554,18 +748,23 @@ export default function AyurvedaScreen() {
   );
 
   /* ------------------------------------------------------------------------ */
+
   /* Category Handling                                                         */
+
   /* ------------------------------------------------------------------------ */
 
   const handleCategory = async (value: string | null) => {
     setSelectedCategory(value);
+
     setSearch("");
 
     await loadAyurveda(value, true);
   };
 
   /* ------------------------------------------------------------------------ */
+
   /* Pull Refresh                                                              */
+
   /* ------------------------------------------------------------------------ */
 
   const handleRefresh = async () => {
@@ -575,7 +774,9 @@ export default function AyurvedaScreen() {
   };
 
   /* ------------------------------------------------------------------------ */
+
   /* Clean Categories                                                          */
+
   /* ------------------------------------------------------------------------ */
 
   const cleanCategories = useMemo(() => {
@@ -583,6 +784,7 @@ export default function AyurvedaScreen() {
       string,
       {
         value: string;
+
         label: string;
       }
     >();
@@ -599,6 +801,7 @@ export default function AyurvedaScreen() {
       if (label && label.toLowerCase() !== "category") {
         map.set(value, {
           value,
+
           label,
         });
       }
@@ -620,6 +823,7 @@ export default function AyurvedaScreen() {
       if (!map.has(category)) {
         map.set(category, {
           value: category,
+
           label,
         });
       }
@@ -629,7 +833,9 @@ export default function AyurvedaScreen() {
   }, [categories, items]);
 
   /* ------------------------------------------------------------------------ */
+
   /* Search Filtering                                                          */
+
   /* ------------------------------------------------------------------------ */
 
   const filteredItems = useMemo(() => {
@@ -641,12 +847,17 @@ export default function AyurvedaScreen() {
 
     return items.filter((item) => {
       const title = item.title || item.name || "";
+
       const description = item.description || "";
+
       const category = item.category || "";
+
       const difficulty = item.difficulty || "";
 
       const searchableText = [title, description, category, difficulty]
+
         .join(" ")
+
         .toLowerCase();
 
       return searchableText.includes(query);
@@ -654,34 +865,19 @@ export default function AyurvedaScreen() {
   }, [items, search]);
 
   /* ------------------------------------------------------------------------ */
+
   /* Loading                                                                   */
+
   /* ------------------------------------------------------------------------ */
 
   if (loading) {
-    return (
-      <SafeAreaView
-        edges={["top"]}
-        className="flex-1 items-center justify-center"
-        style={{
-          backgroundColor: COLORS.background,
-        }}
-      >
-        <ActivityIndicator size="small" color={COLORS.green} />
-
-        <Text
-          className="mt-4 text-[13px]"
-          style={{
-            color: COLORS.muted,
-          }}
-        >
-          Preparing your Ayurvedic space...
-        </Text>
-      </SafeAreaView>
-    );
+    return <AyurvedaSkeleton />;
   }
 
   /* ------------------------------------------------------------------------ */
+
   /* Error                                                                     */
+
   /* ------------------------------------------------------------------------ */
 
   if (error) {
@@ -697,6 +893,7 @@ export default function AyurvedaScreen() {
           className="w-full rounded-[22px] bg-white p-6"
           style={{
             borderWidth: 1,
+
             borderColor: COLORS.border,
           }}
         >
@@ -714,6 +911,7 @@ export default function AyurvedaScreen() {
               className="mt-4 text-[21px] font-bold"
               style={{
                 color: COLORS.text,
+
                 fontFamily: "serif",
               }}
             >
@@ -731,7 +929,7 @@ export default function AyurvedaScreen() {
           </View>
 
           <TouchableOpacity
-            onPress={() => loadAyurveda(selectedCategory, true)}
+            onPress={handleRetry}
             activeOpacity={0.8}
             className="mt-6 items-center rounded-[14px] py-3.5"
             style={{
@@ -748,7 +946,9 @@ export default function AyurvedaScreen() {
   }
 
   /* ------------------------------------------------------------------------ */
+
   /* Main                                                                      */
+
   /* ------------------------------------------------------------------------ */
 
   return (
@@ -759,203 +959,207 @@ export default function AyurvedaScreen() {
         backgroundColor: COLORS.background,
       }}
     >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={COLORS.green}
-          />
-        }
-        contentContainerStyle={{
-          paddingHorizontal: 18,
-          paddingTop: 12,
-          paddingBottom: 55,
-        }}
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 4 : 0}
       >
-        {/* Header */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={COLORS.green}
+            />
+          }
+          contentContainerStyle={{
+            paddingHorizontal: 18,
 
-        <AyurvedaHeader />
+            paddingTop: 12,
 
-        {/* Search */}
+            paddingBottom: 32,
+          }}
+        >
+          {/* Header */}
 
-        <AyurvedaSearch
-          value={search}
-          onChangeText={setSearch}
-          onClear={() => setSearch("")}
-        />
+          <AyurvedaHeader />
 
-        {/* Hero */}
+          {/* Search */}
 
-        <AyurvedaHero />
+          <AyurvedaSearch
+            value={search}
+            onChangeText={setSearch}
+            onClear={() => setSearch("")}
+          />
 
-        {/* Intro */}
+          {/* Hero */}
 
-        <AyurvedaIntroCard />
+          <AyurvedaHero />
 
-        {/* Categories */}
+          {/* Intro */}
 
-        <CategorySection
-          categories={cleanCategories}
-          selectedCategory={selectedCategory}
-          onSelect={handleCategory}
-        />
+          <AyurvedaIntroCard />
 
-        {/* Results */}
+          {/* Categories */}
 
-        <View className="mt-9">
-          <View className="flex-row items-end justify-between">
-            <View className="flex-1">
-              <Text
-                className="text-[21px] font-bold"
-                style={{
-                  color: COLORS.text,
-                  fontFamily: "serif",
-                }}
-              >
-                {search
-                  ? "Search results"
-                  : selectedCategory
-                    ? formatCategoryLabel(selectedCategory)
-                    : "All practices"}
-              </Text>
+          <CategorySection
+            categories={cleanCategories}
+            selectedCategory={selectedCategory}
+            onSelect={handleCategory}
+          />
 
-              <Text
-                className="mt-1 text-[11px]"
-                style={{
-                  color: COLORS.muted,
-                }}
-              >
-                {search
-                  ? `${filteredItems.length} ${
-                      filteredItems.length === 1 ? "practice" : "practices"
-                    } found`
-                  : `${filteredItems.length} ${
-                      filteredItems.length === 1 ? "item" : "items"
-                    } available`}
-              </Text>
-            </View>
+          {/* Results */}
 
-            <View
-              className="h-7 min-w-7 items-center justify-center rounded-full px-2"
-              style={{
-                backgroundColor: COLORS.lightGreen,
-              }}
-            >
-              <Text
-                className="text-[10px] font-bold"
-                style={{
-                  color: COLORS.green,
-                }}
-              >
-                {filteredItems.length}
-              </Text>
-            </View>
-          </View>
-
-          {/* Search indicator */}
-
-          {search ? (
-            <View className="mt-3 flex-row items-center">
-              <Ionicons name="search-outline" size={13} color={COLORS.green} />
-
-              <Text
-                className="ml-1.5 text-[11px]"
-                style={{
-                  color: COLORS.muted,
-                }}
-              >
-                Showing results for{" "}
+          <View className="mt-9">
+            <View className="flex-row items-end justify-between">
+              <View className="flex-1">
                 <Text
-                  className="font-semibold"
+                  className="text-[21px] font-bold"
+                  style={{
+                    color: COLORS.text,
+
+                    fontFamily: "serif",
+                  }}
+                >
+                  {search
+                    ? "Search results"
+                    : selectedCategory
+                      ? formatCategoryLabel(selectedCategory)
+                      : "All practices"}
+                </Text>
+
+                <Text
+                  className="mt-1 text-[11px]"
+                  style={{
+                    color: COLORS.muted,
+                  }}
+                >
+                  {search
+                    ? `${filteredItems.length} ${
+                        filteredItems.length === 1 ? "practice" : "practices"
+                      } found`
+                    : `${filteredItems.length} ${
+                        filteredItems.length === 1 ? "item" : "items"
+                      } available`}
+                </Text>
+              </View>
+
+              <View
+                className="h-7 min-w-7 items-center justify-center rounded-full px-2"
+                style={{
+                  backgroundColor: COLORS.lightGreen,
+                }}
+              >
+                <Text
+                  className="text-[10px] font-bold"
                   style={{
                     color: COLORS.green,
                   }}
                 >
-                  "{search}"
+                  {filteredItems.length}
                 </Text>
+              </View>
+            </View>
+
+            {/* Search indicator */}
+
+            {search ? (
+              <View className="mt-3 flex-row items-center">
+                <Ionicons
+                  name="search-outline"
+                  size={13}
+                  color={COLORS.green}
+                />
+
+                <Text
+                  className="ml-1.5 text-[11px]"
+                  style={{
+                    color: COLORS.muted,
+                  }}
+                >
+                  Showing results for{" "}
+                  <Text
+                    className="font-semibold"
+                    style={{
+                      color: COLORS.green,
+                    }}
+                  >
+                    "{search}"
+                  </Text>
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Cards */}
+
+            {filteredItems.length > 0 ? (
+              <View className="mt-4 w-full">
+                {filteredItems.map((item) => (
+                  <ExploreContentCard
+                    key={item._id}
+                    item={item}
+                    type="ayurveda"
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(main)/ayurveda/[id]",
+
+                        params: {
+                          id: item._id,
+                        },
+                      })
+                    }
+                  />
+                ))}
+              </View>
+            ) : (
+              <View className="mt-5">
+                <AyurvedaEmptyState searched={Boolean(search)} />
+              </View>
+            )}
+          </View>
+
+          {/* Calm Visuals */}
+
+          {!search && filteredItems.length > 0 ? <CalmStrip /> : null}
+
+          {/* Bottom Quote */}
+
+          {!search ? (
+            <View className="mt-10 items-center px-5">
+              <View
+                className="mb-5 h-px w-10"
+                style={{
+                  backgroundColor: COLORS.border,
+                }}
+              />
+
+              <Text
+                className="text-center text-[19px] font-bold leading-7"
+                style={{
+                  color: COLORS.text,
+
+                  fontFamily: "serif",
+                }}
+              >
+                Find balance
+                {"\n"}
+                in the way you live.
+              </Text>
+
+              <Text
+                className="mt-3 text-center text-[11px] leading-5"
+                style={{
+                  color: COLORS.softMuted,
+                }}
+              >
+                Take a few moments to reconnect with yourself.
               </Text>
             </View>
           ) : null}
-
-          {/* Cards */}
-
-          {filteredItems.length > 0 ? (
-            <View className="mt-4 w-full">
-              {filteredItems.map((item) => (
-                <ExploreContentCard
-                  key={item._id}
-                  item={item}
-                  type="ayurveda"
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(main)/ayurveda/[id]",
-                      params: {
-                        id: item._id,
-                      },
-                    })
-                  }
-                />
-              ))}
-            </View>
-          ) : (
-            <View className="mt-5">
-              <ExploreEmptyState
-                title={
-                  search
-                    ? "No Ayurveda practices found"
-                    : "No Ayurveda content available"
-                }
-                description={
-                  search
-                    ? "Try another search such as herbs, digestion, sleep or daily routine."
-                    : "Try another category or check back later for more content."
-                }
-              />
-            </View>
-          )}
-        </View>
-
-        {/* Calm Visuals */}
-
-        {!search && filteredItems.length > 0 ? <CalmStrip /> : null}
-
-        {/* Bottom Quote */}
-
-        {!search ? (
-          <View className="mt-10 items-center px-5">
-            <View
-              className="mb-5 h-px w-10"
-              style={{
-                backgroundColor: COLORS.border,
-              }}
-            />
-
-            <Text
-              className="text-center text-[19px] font-bold leading-7"
-              style={{
-                color: COLORS.text,
-                fontFamily: "serif",
-              }}
-            >
-              Find balance
-              {"\n"}
-              in the way you live.
-            </Text>
-
-            <Text
-              className="mt-3 text-center text-[11px] leading-5"
-              style={{
-                color: COLORS.softMuted,
-              }}
-            >
-              Take a few moments to reconnect with yourself.
-            </Text>
-          </View>
-        ) : null}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

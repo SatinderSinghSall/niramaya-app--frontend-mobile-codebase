@@ -1,10 +1,14 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -25,15 +29,17 @@ import {
 
 import { Goal, GoalStatus } from "@/types/goal";
 
-/* ==========================================================================
+/* ============================================================================
    TYPES
-========================================================================== */
+============================================================================ */
 
 type Filter = "all" | GoalStatus;
 
-/* ==========================================================================
-   COLORS
-========================================================================== */
+/* ============================================================================
+   CONSTANTS
+============================================================================ */
+
+const PAGE_SIZE = 5;
 
 const COLORS = {
   background: "#F7F3EA",
@@ -49,21 +55,22 @@ const COLORS = {
   lightGreen: "#E7EFE3",
   lighterGreen: "#F0F5ED",
 
-  border: "#E3DDD2",
+  border: "#E1DCD2",
 
   amber: "#B47A25",
   amberLight: "#F7EEDB",
-
-  blue: "#52718B",
-  blueLight: "#EAF0F4",
 
   grey: "#858980",
   greyLight: "#ECECE8",
 };
 
-/* ==========================================================================
+/* ============================================================================
    HELPERS
-========================================================================== */
+============================================================================ */
+
+function clampProgress(value?: number) {
+  return Math.min(Math.max(value || 0, 0), 100);
+}
 
 function getStatusConfig(status: GoalStatus) {
   switch (status) {
@@ -142,126 +149,233 @@ function getCategoryIconName(category: string): keyof typeof Ionicons.glyphMap {
     return "body-outline";
   }
 
-  return "sparkles-outline";
+  return "leaf-outline";
 }
 
-function clampProgress(value?: number) {
-  return Math.min(Math.max(value || 0, 0), 100);
-}
+/* ============================================================================
+   SKELETON
+============================================================================ */
 
-/* ==========================================================================
-   PAGE HEADER
-========================================================================== */
-
-function GoalsHeader({ onCreate }: { onCreate: () => void }) {
+function GoalSkeletonCard() {
   return (
-    <View className="px-[18px] pt-3">
-      <View className="flex-row items-center justify-between">
-        <View className="flex-1 pr-5">
-          <Text className="text-[10px] font-semibold uppercase tracking-[1.6px] text-[#718071]">
-            Your journey
-          </Text>
+    <View className="mb-3 rounded-[10px] border border-[#E3DED4] bg-white px-4 py-4">
+      <View className="flex-row items-start">
+        <View className="h-9 w-9 rounded-full bg-[#E9E6DE]" />
 
-          <Text className="mt-1 font-serif text-[29px] font-bold leading-[34px] text-[#263128]">
-            Goals
-          </Text>
+        <View className="ml-3 flex-1">
+          <View className="h-4 w-[64%] rounded bg-[#E9E6DE]" />
 
-          <Text className="mt-1.5 text-[11px] leading-[17px] text-[#777C74]">
-            Small intentions can become meaningful changes.
+          <View className="mt-2 h-2.5 w-[30%] rounded bg-[#EFEBE3]" />
+        </View>
+
+        <View className="h-3 w-12 rounded bg-[#E9E6DE]" />
+      </View>
+
+      <View className="mt-5 h-1 rounded-full bg-[#ECE9E1]" />
+
+      <View className="mt-4 flex-row justify-between">
+        <View className="h-3 w-16 rounded bg-[#ECE9E1]" />
+
+        <View className="h-3 w-20 rounded bg-[#ECE9E1]" />
+      </View>
+    </View>
+  );
+}
+
+function GoalsLoading() {
+  return (
+    <SafeAreaView edges={["top"]} className="flex-1 bg-[#F7F3EA]">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: 40,
+        }}
+      >
+        {/* Header */}
+
+        <View className="px-[18px] pt-2">
+          <View className="h-2.5 w-20 rounded bg-[#E2DED4]" />
+
+          <View className="mt-2 flex-row items-center">
+            <View className="h-9 w-9 rounded-full bg-[#E7E3DA]" />
+
+            <View className="ml-3 h-9 w-28 rounded bg-[#E2DED4]" />
+
+            <View className="ml-auto h-10 w-10 rounded-full bg-[#DDE7DA]" />
+          </View>
+
+          <View className="mt-2 h-3 w-52 rounded bg-[#E9E5DC]" />
+        </View>
+
+        {/* Search */}
+
+        <View className="mx-[18px] mt-5 h-[46px] rounded-[9px] bg-white">
+          <View className="m-3 h-5 w-5 rounded-full bg-[#E9E6DE]" />
+        </View>
+
+        {/* Stats */}
+
+        <View className="mt-4 flex-row px-[18px]">
+          <View className="mr-2 h-[82px] flex-1 rounded-[9px] bg-white" />
+          <View className="mr-2 h-[82px] flex-1 rounded-[9px] bg-white" />
+          <View className="h-[82px] flex-1 rounded-[9px] bg-white" />
+        </View>
+
+        {/* Progress */}
+
+        <View className="mx-[18px] mt-4 rounded-[10px] bg-white px-4 py-4">
+          <View className="h-2.5 w-24 rounded bg-[#E8E4DA]" />
+
+          <View className="mt-2 h-7 w-16 rounded bg-[#E8E4DA]" />
+
+          <View className="mt-4 h-1 rounded-full bg-[#ECE9E1]" />
+        </View>
+
+        {/* Heading */}
+
+        <View className="mx-[18px] mt-7">
+          <View className="h-6 w-28 rounded bg-[#E5E1D8]" />
+
+          <View className="mt-2 h-2.5 w-20 rounded bg-[#ECE8DF]" />
+        </View>
+
+        {/* Filters */}
+
+        <View className="mt-4 flex-row px-[18px]">
+          <View className="mr-2 h-9 w-16 rounded-full bg-[#E2DED4]" />
+
+          <View className="mr-2 h-9 w-20 rounded-full bg-[#E9E5DC]" />
+
+          <View className="mr-2 h-9 w-20 rounded-full bg-[#E9E5DC]" />
+
+          <View className="h-9 w-24 rounded-full bg-[#E9E5DC]" />
+        </View>
+
+        {/* Cards */}
+
+        <View className="mt-4 px-[18px]">
+          <GoalSkeletonCard />
+          <GoalSkeletonCard />
+          <GoalSkeletonCard />
+        </View>
+
+        <View className="items-center pt-2">
+          <ActivityIndicator size="small" color={COLORS.green} />
+
+          <Text className="mt-2 text-[10px] text-[#8B8E86]">
+            Loading your goals...
           </Text>
         </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+/* ============================================================================
+   HEADER
+============================================================================ */
+
+/*
+ * IMPORTANT:
+ * This intentionally keeps the original Goals header style.
+ *
+ * Only the back button is added beside "Goals".
+ */
+
+function GoalsHeader({
+  onBack,
+  onCreate,
+}: {
+  onBack: () => void;
+  onCreate: () => void;
+}) {
+  return (
+    <View className="px-[18px] pt-3">
+      {/* Small eyebrow stays the same */}
+
+      <Text className="text-[10px] font-semibold uppercase tracking-[1.6px] text-[#718071]">
+        Your journey
+      </Text>
+
+      {/* Title row */}
+
+      <View className="mt-1 flex-row items-center">
+        <TouchableOpacity
+          activeOpacity={0.75}
+          onPress={onBack}
+          className="mr-3 h-9 w-9 items-center justify-center rounded-full border border-[#DED9CF] bg-white"
+        >
+          <Ionicons name="chevron-back" size={18} color={COLORS.text} />
+        </TouchableOpacity>
+
+        <Text className="font-serif text-[29px] font-bold leading-[34px] text-[#263128]">
+          Goals
+        </Text>
 
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={onCreate}
-          className="h-12 w-12 items-center justify-center rounded-full bg-[#4D6A50]"
+          className="ml-auto h-11 w-11 items-center justify-center rounded-full bg-[#4D6A50]"
         >
-          <Ionicons name="add" size={24} color="#FFFFFF" />
+          <Ionicons name="add" size={23} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
+
+      <Text className="mt-1.5 text-[11px] leading-[17px] text-[#777C74]">
+        Small intentions can become meaningful changes.
+      </Text>
     </View>
   );
 }
 
-/* ==========================================================================
-   JOURNEY CARD
-========================================================================== */
+/* ============================================================================
+   SEARCH
+============================================================================ */
 
-function JourneyCard({
-  averageProgress,
-  active,
-  total,
+function GoalSearch({
+  value,
+  onChange,
 }: {
-  averageProgress: number;
-  active: number;
-  total: number;
+  value: string;
+  onChange: (value: string) => void;
 }) {
-  const progress = clampProgress(averageProgress);
-
   return (
-    <View className="mx-[18px] mt-5 overflow-hidden rounded-[7px] bg-[#4D6A50] px-5 py-5">
-      {/* Decorative shapes */}
+    <View className="mx-[18px] mt-5 flex-row items-center rounded-[9px] border border-[#DED9CF] bg-white px-3.5">
+      <Ionicons name="search-outline" size={18} color="#8A8F86" />
 
-      <View className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-white/10" />
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder="Search goals"
+        placeholderTextColor="#A2A59E"
+        returnKeyType="search"
+        autoCapitalize="none"
+        autoCorrect={false}
+        className="ml-2 flex-1 py-3 text-[12px] text-[#263128]"
+      />
 
-      <View className="absolute -bottom-14 right-16 h-28 w-28 rounded-full bg-white/5" />
-
-      <View className="flex-row items-start justify-between">
-        <View className="flex-1 pr-5">
-          <Text className="text-[9px] font-semibold uppercase tracking-[1.5px] text-[#DDE8D9]">
-            Wellness journey
-          </Text>
-
-          <Text className="mt-2 font-serif text-[21px] font-bold leading-[26px] text-white">
-            Keep going, gently.
-          </Text>
-
-          <Text className="mt-1.5 text-[10px] leading-[16px] text-[#DDE8D9]">
-            You have {active} active {active === 1 ? "goal" : "goals"} to focus
-            on.
-          </Text>
-        </View>
-
-        <View className="h-[58px] w-[58px] items-center justify-center rounded-full border border-white/30 bg-white/10">
-          <Text className="text-[15px] font-bold text-white">{progress}%</Text>
-
-          <Text className="text-[7px] text-[#DDE8D9]">progress</Text>
-        </View>
-      </View>
-
-      <View className="mt-5">
-        <View className="h-[5px] overflow-hidden rounded-full bg-white/20">
-          <View
-            className="h-full rounded-full bg-white"
-            style={{
-              width: `${progress}%`,
-            }}
-          />
-        </View>
-
-        <View className="mt-2 flex-row items-center justify-between">
-          <Text className="text-[8px] text-[#DDE8D9]">
-            {total} {total === 1 ? "goal" : "goals"} in your journey
-          </Text>
-
-          <Text className="text-[8px] font-semibold text-white">
-            {progress}% complete
-          </Text>
-        </View>
-      </View>
+      {value.length > 0 ? (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => onChange("")}
+          className="h-8 w-8 items-center justify-center"
+        >
+          <Ionicons name="close-circle" size={17} color="#A2A59E" />
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 }
 
-/* ==========================================================================
-   MINI STAT
-========================================================================== */
+/* ============================================================================
+   STAT CARD
+============================================================================ */
 
-function MiniStat({
+function StatCard({
   icon,
   label,
   value,
-  active,
+  active = false,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
@@ -270,20 +384,20 @@ function MiniStat({
 }) {
   return (
     <View
-      className={`flex-1 rounded-[6px] border px-3 py-3.5 ${
-        active ? "border-[#D8E5D3] bg-[#F0F5ED]" : "border-[#E3DDD2] bg-white"
+      className={`flex-1 rounded-[9px] border px-3 py-3.5 ${
+        active ? "border-[#D8E5D3] bg-[#F0F5ED]" : "border-[#E1DCD2] bg-white"
       }`}
     >
       <View className="flex-row items-center">
         <Ionicons
           name={icon}
           size={14}
-          color={active ? COLORS.green : "#8B8E86"}
+          color={active ? COLORS.green : "#858980"}
         />
 
         <Text
           className={`ml-1.5 text-[8px] font-semibold ${
-            active ? "text-[#4D6A50]" : "text-[#8B8E86]"
+            active ? "text-[#4D6A50]" : "text-[#858980]"
           }`}
         >
           {label}
@@ -291,7 +405,7 @@ function MiniStat({
       </View>
 
       <Text
-        className={`mt-2 font-serif text-[21px] font-bold ${
+        className={`mt-2 font-serif text-[22px] font-bold ${
           active ? "text-[#4D6A50]" : "text-[#263128]"
         }`}
       >
@@ -301,9 +415,93 @@ function MiniStat({
   );
 }
 
-/* ==========================================================================
-   FILTER
-========================================================================== */
+/* ============================================================================
+   STATS
+============================================================================ */
+
+function GoalStats({
+  total,
+  active,
+  completed,
+}: {
+  total: number;
+  active: number;
+  completed: number;
+}) {
+  return (
+    <View className="mt-4 flex-row px-[18px]">
+      <StatCard icon="layers-outline" label="Total" value={total} />
+
+      <View className="w-2" />
+
+      <StatCard
+        icon="radio-button-on-outline"
+        label="Active"
+        value={active}
+        active
+      />
+
+      <View className="w-2" />
+
+      <StatCard
+        icon="checkmark-circle-outline"
+        label="Done"
+        value={completed}
+      />
+    </View>
+  );
+}
+
+/* ============================================================================
+   PROGRESS SUMMARY
+============================================================================ */
+
+function ProgressSummary({
+  progress,
+  total,
+}: {
+  progress: number;
+  total: number;
+}) {
+  return (
+    <View className="mx-[18px] mt-4 rounded-[10px] border border-[#DED9CF] bg-white px-4 py-4">
+      <View className="flex-row items-center justify-between">
+        <View className="flex-1">
+          <Text className="text-[9px] font-semibold uppercase tracking-[1.1px] text-[#8A8F86]">
+            Overall progress
+          </Text>
+
+          <View className="mt-1 flex-row items-baseline">
+            <Text className="font-serif text-[27px] font-bold text-[#304B36]">
+              {progress}%
+            </Text>
+
+            <Text className="ml-2 text-[10px] text-[#858980]">
+              across {total} {total === 1 ? "goal" : "goals"}
+            </Text>
+          </View>
+        </View>
+
+        <Text className="text-[10px] font-medium text-[#8B8E86]">
+          {progress === 100 ? "Complete" : "In progress"}
+        </Text>
+      </View>
+
+      <View className="mt-4 h-[4px] overflow-hidden rounded-full bg-[#ECE9E1]">
+        <View
+          className="h-full rounded-full bg-[#4D6A50]"
+          style={{
+            width: `${progress}%`,
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
+/* ============================================================================
+   FILTER BUTTON
+============================================================================ */
 
 function FilterButton({
   label,
@@ -312,7 +510,7 @@ function FilterButton({
   onPress,
 }: {
   label: string;
-  count?: number;
+  count: number;
   active: boolean;
   onPress: () => void;
 }) {
@@ -321,7 +519,7 @@ function FilterButton({
       activeOpacity={0.8}
       onPress={onPress}
       className={`mr-2 flex-row items-center rounded-full border px-3.5 py-2 ${
-        active ? "border-[#4D6A50] bg-[#4D6A50]" : "border-[#DDD7CB] bg-white"
+        active ? "border-[#4D6A50] bg-[#4D6A50]" : "border-[#DDD8CE] bg-white"
       }`}
     >
       <Text
@@ -332,28 +530,26 @@ function FilterButton({
         {label}
       </Text>
 
-      {count !== undefined ? (
-        <View
-          className={`ml-1.5 min-w-[17px] items-center rounded-full px-1 ${
-            active ? "bg-white/20" : "bg-[#F1EFE9]"
+      <View
+        className={`ml-1.5 min-w-[17px] items-center rounded-full px-1 ${
+          active ? "bg-white/20" : "bg-[#F1EFE9]"
+        }`}
+      >
+        <Text
+          className={`text-[8px] font-bold ${
+            active ? "text-white" : "text-[#858980]"
           }`}
         >
-          <Text
-            className={`text-[8px] font-bold ${
-              active ? "text-white" : "text-[#858980]"
-            }`}
-          >
-            {count}
-          </Text>
-        </View>
-      ) : null}
+          {count}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 }
 
-/* ==========================================================================
+/* ============================================================================
    GOAL CARD
-========================================================================== */
+============================================================================ */
 
 function GoalCard({ goal, onPress }: { goal: Goal; onPress: () => void }) {
   const progress = clampProgress(goal.progressPercentage);
@@ -366,63 +562,42 @@ function GoalCard({ goal, onPress }: { goal: Goal; onPress: () => void }) {
 
   return (
     <TouchableOpacity
-      activeOpacity={0.9}
+      activeOpacity={0.86}
       onPress={onPress}
-      className="mb-3.5 rounded-[7px] border border-[#E3DDD2] bg-white px-4 py-4"
+      className="mb-3 rounded-[10px] border border-[#E0DBD1] bg-white px-4 py-4"
     >
-      {/* Top row */}
+      {/* Top */}
 
       <View className="flex-row items-start">
-        <View className="h-11 w-11 items-center justify-center rounded-[5px] bg-[#F0F4ED]">
-          <Ionicons name={icon} size={20} color={COLORS.green} />
+        <View className="h-9 w-9 items-center justify-center rounded-full bg-[#F0F4ED]">
+          <Ionicons name={icon} size={17} color={COLORS.green} />
         </View>
 
         <View className="ml-3 flex-1 pr-2">
           <Text
             numberOfLines={2}
-            className="font-serif text-[15px] font-bold leading-[19px] text-[#263128]"
+            className="font-serif text-[16px] font-bold leading-[20px] text-[#263128]"
           >
             {goal.title}
           </Text>
 
-          <View className="mt-1 flex-row items-center">
-            <Ionicons name="leaf-outline" size={9} color="#92968D" />
-
-            <Text className="ml-1 text-[8px] text-[#8B8E86]">
-              {categoryLabel}
-            </Text>
-          </View>
+          <Text className="mt-1 text-[9px] text-[#8B8E86]">
+            {categoryLabel}
+          </Text>
         </View>
 
-        <View
-          className="flex-row items-center rounded-full px-2.5 py-1.5"
-          style={{
-            backgroundColor: status.background,
-          }}
-        >
-          <Ionicons name={status.icon} size={10} color={status.color} />
-
+        <View className="items-end">
           <Text
-            className="ml-1 text-[8px] font-bold"
+            className="text-[9px] font-semibold"
             style={{
               color: status.color,
             }}
           >
             {getGoalStatusLabel(goal.status)}
           </Text>
-        </View>
-      </View>
-
-      {/* Progress */}
-
-      <View className="mt-5">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-[8px] font-medium uppercase tracking-[0.8px] text-[#9A9C95]">
-            Progress
-          </Text>
 
           <Text
-            className="text-[10px] font-bold"
+            className="mt-1 text-[11px] font-bold"
             style={{
               color: status.color,
             }}
@@ -430,97 +605,115 @@ function GoalCard({ goal, onPress }: { goal: Goal; onPress: () => void }) {
             {progress}%
           </Text>
         </View>
-
-        <View className="mt-2 h-[5px] overflow-hidden rounded-full bg-[#EEECE6]">
-          <View
-            className="h-full rounded-full"
-            style={{
-              width: `${progress}%`,
-              backgroundColor: status.progress,
-            }}
-          />
-        </View>
       </View>
 
-      {/* Current / Target */}
+      {/* Progress */}
 
-      <View className="mt-4 flex-row items-center rounded-[5px] bg-[#F8F6F1] px-3 py-2.5">
-        <View className="flex-1">
-          <Text className="text-[7px] uppercase tracking-[0.8px] text-[#9A9C95]">
+      <View className="mt-4 h-[4px] overflow-hidden rounded-full bg-[#ECE9E1]">
+        <View
+          className="h-full rounded-full"
+          style={{
+            width: `${progress}%`,
+            backgroundColor: status.progress,
+          }}
+        />
+      </View>
+
+      {/* Values */}
+
+      <View className="mt-3 flex-row items-center justify-between">
+        <View>
+          <Text className="text-[8px] uppercase tracking-[0.7px] text-[#A0A29A]">
             Current
           </Text>
 
-          <Text className="mt-1 text-[11px] font-bold text-[#344038]">
+          <Text className="mt-0.5 text-[10px] font-semibold text-[#3E4840]">
             {goal.currentValue ?? 0}
             {goal.target?.unit ? ` ${goal.target.unit}` : ""}
           </Text>
         </View>
 
-        <View className="h-7 w-7 items-center justify-center rounded-full bg-white">
-          <Ionicons name="arrow-forward" size={12} color="#8B8E86" />
-        </View>
+        <View className="flex-row items-center">
+          <View className="mr-3 items-end">
+            <Text className="text-[8px] uppercase tracking-[0.7px] text-[#A0A29A]">
+              Target
+            </Text>
 
-        <View className="flex-1 items-end">
-          <Text className="text-[7px] uppercase tracking-[0.8px] text-[#9A9C95]">
-            Target
-          </Text>
+            <Text className="mt-0.5 text-[10px] font-semibold text-[#3E4840]">
+              {goal.target?.value ?? 0}
+              {goal.target?.unit ? ` ${goal.target.unit}` : ""}
+            </Text>
+          </View>
 
-          <Text className="mt-1 text-[11px] font-bold text-[#344038]">
-            {goal.target?.value ?? 0}
-            {goal.target?.unit ? ` ${goal.target.unit}` : ""}
-          </Text>
-        </View>
-      </View>
-
-      {/* Bottom */}
-
-      <View className="mt-3 flex-row items-center justify-between">
-        <Text className="text-[8px] text-[#9A9C95]">
-          Tap to view goal details
-        </Text>
-
-        <View className="h-6 w-6 items-center justify-center rounded-full bg-[#F1F3EE]">
-          <Ionicons name="chevron-forward" size={12} color={COLORS.green} />
+          <View className="h-7 w-7 items-center justify-center rounded-full bg-[#F2F4EF]">
+            <Ionicons name="chevron-forward" size={13} color={COLORS.green} />
+          </View>
         </View>
       </View>
     </TouchableOpacity>
   );
 }
 
-/* ==========================================================================
+/* ============================================================================
    EMPTY STATE
-========================================================================== */
+============================================================================ */
 
 function EmptyGoals({
   filter,
+  search,
   onCreate,
+  onClearSearch,
 }: {
   filter: Filter;
+  search: string;
   onCreate: () => void;
+  onClearSearch: () => void;
 }) {
-  const isAll = filter === "all";
+  const searching = search.trim().length > 0;
 
   return (
-    <View className="items-center rounded-[7px] border border-[#E3DDD2] bg-white px-6 py-10">
+    <View className="items-center rounded-[10px] border border-[#E1DCD2] bg-white px-6 py-10">
       <View className="h-14 w-14 items-center justify-center rounded-full bg-[#EEF4EB]">
         <Ionicons
-          name={isAll ? "leaf-outline" : "filter-outline"}
-          size={25}
+          name={
+            searching
+              ? "search-outline"
+              : filter === "all"
+                ? "leaf-outline"
+                : "filter-outline"
+          }
+          size={24}
           color={COLORS.green}
         />
       </View>
 
       <Text className="mt-4 text-center font-serif text-[19px] font-bold text-[#263128]">
-        {isAll ? "Begin your journey" : "Nothing here yet"}
+        {searching
+          ? "No goals found"
+          : filter === "all"
+            ? "No goals yet"
+            : "Nothing here yet"}
       </Text>
 
-      <Text className="mt-1.5 max-w-[270px] text-center text-[10px] leading-[16px] text-[#777C74]">
-        {isAll
-          ? "Choose one small intention for your wellbeing and take the first step."
-          : "There are no goals with this status right now."}
+      <Text className="mt-2 max-w-[270px] text-center text-[10px] leading-[16px] text-[#777C74]">
+        {searching
+          ? "Try a different search or clear the search field."
+          : filter === "all"
+            ? "Start with one small goal and build from there."
+            : "There are no goals with this status right now."}
       </Text>
 
-      {isAll ? (
+      {searching ? (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onClearSearch}
+          className="mt-5 rounded-full border border-[#D8D4CA] px-5 py-2.5"
+        >
+          <Text className="text-[10px] font-semibold text-[#4D6A50]">
+            Clear search
+          </Text>
+        </TouchableOpacity>
+      ) : filter === "all" ? (
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={onCreate}
@@ -537,51 +730,9 @@ function EmptyGoals({
   );
 }
 
-/* ==========================================================================
-   LOADING
-========================================================================== */
-
-function GoalsLoading() {
-  return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-[#F7F3EA]">
-      <View className="px-[18px] pt-5">
-        <View className="h-2.5 w-20 rounded-full bg-[#E5E0D6]" />
-
-        <View className="mt-2 h-8 w-28 rounded bg-[#E5E0D6]" />
-
-        <View className="mt-2 h-3 w-48 rounded bg-[#E5E0D6]" />
-
-        <View className="mt-5 h-[155px] rounded-[7px] bg-[#E5E0D6]" />
-
-        <View className="mt-4 flex-row">
-          <View className="mr-2 h-[75px] flex-1 rounded-[6px] bg-[#E5E0D6]" />
-
-          <View className="mr-2 h-[75px] flex-1 rounded-[6px] bg-[#E5E0D6]" />
-
-          <View className="h-[75px] flex-1 rounded-[6px] bg-[#E5E0D6]" />
-        </View>
-
-        <View className="mt-7 h-5 w-32 rounded bg-[#E5E0D6]" />
-
-        <View className="mt-3 h-10 w-full rounded-full bg-[#E5E0D6]" />
-
-        <View className="mt-3 h-[220px] rounded-[7px] bg-[#E5E0D6]" />
-      </View>
-
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="small" color={COLORS.green} />
-
-        <Text className="mt-3 text-[10px] text-[#777C74]">
-          Preparing your goals...
-        </Text>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-/* ==========================================================================
+/* ============================================================================
    ERROR
-========================================================================== */
+============================================================================ */
 
 function GoalsError({
   message,
@@ -595,13 +746,17 @@ function GoalsError({
       edges={["top"]}
       className="flex-1 items-center justify-center bg-[#F7F3EA] px-[18px]"
     >
-      <View className="w-full rounded-[7px] border border-[#E3DDD2] bg-white px-6 py-7">
+      <View className="w-full rounded-[10px] border border-[#E1DCD2] bg-white px-6 py-8">
         <View className="mx-auto h-14 w-14 items-center justify-center rounded-full bg-[#EEF4EB]">
-          <Ionicons name="leaf-outline" size={24} color={COLORS.green} />
+          <Ionicons
+            name="cloud-offline-outline"
+            size={24}
+            color={COLORS.green}
+          />
         </View>
 
         <Text className="mt-4 text-center font-serif text-[20px] font-bold text-[#263128]">
-          Your goals are taking a moment
+          We couldn't load your goals
         </Text>
 
         <Text className="mt-2 text-center text-[10px] leading-[16px] text-[#777C74]">
@@ -611,7 +766,7 @@ function GoalsError({
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={onRetry}
-          className="mt-5 items-center rounded-[5px] bg-[#4D6A50] py-3"
+          className="mt-5 items-center rounded-[7px] bg-[#4D6A50] py-3"
         >
           <Text className="text-[10px] font-bold text-white">Try Again</Text>
         </TouchableOpacity>
@@ -620,32 +775,83 @@ function GoalsError({
   );
 }
 
-/* ==========================================================================
+/* ============================================================================
    MAIN SCREEN
-========================================================================== */
+============================================================================ */
 
 export default function GoalsScreen() {
   const [goals, setGoals] = useState<Goal[]>([]);
 
   const [filter, setFilter] = useState<Filter>("all");
 
+  const [search, setSearch] = useState("");
+
   const [loading, setLoading] = useState(true);
 
   const [refreshing, setRefreshing] = useState(false);
 
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const [error, setError] = useState("");
 
-  /* ------------------------------------------------------------------------
-     LOAD
-  ------------------------------------------------------------------------ */
+  /*
+   * Progressive client-side pagination.
+   */
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const loadGoals = useCallback(async () => {
+  /*
+   * Android keyboard height.
+   */
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  /* ==========================================================================
+     KEYBOARD
+  ========================================================================== */
+
+  useEffect(() => {
+    if (Platform.OS !== "android") {
+      return;
+    }
+
+    const keyboardDidShowSubscription = Keyboard.addListener(
+      "keyboardDidShow",
+      (event) => {
+        setKeyboardHeight(event.endCoordinates.height);
+      },
+    );
+
+    const keyboardDidHideSubscription = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      },
+    );
+
+    return () => {
+      keyboardDidShowSubscription.remove();
+      keyboardDidHideSubscription.remove();
+    };
+  }, []);
+
+  /* ==========================================================================
+     LOAD
+  ========================================================================== */
+
+  const loadGoals = useCallback(async (showRefreshing = false) => {
     try {
+      if (showRefreshing) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
       setError("");
 
       const data = await getGoals();
 
       setGoals(data);
+
+      setVisibleCount(PAGE_SIZE);
     } catch (err: any) {
       console.error("Goals loading error:", err);
 
@@ -660,9 +866,9 @@ export default function GoalsScreen() {
     }
   }, []);
 
-  /* ------------------------------------------------------------------------
-     REFRESH WHEN ACTIVE
-  ------------------------------------------------------------------------ */
+  /* ==========================================================================
+     REFRESH ON FOCUS
+  ========================================================================== */
 
   useFocusEffect(
     useCallback(() => {
@@ -672,21 +878,55 @@ export default function GoalsScreen() {
     }, [loadGoals]),
   );
 
-  /* ------------------------------------------------------------------------
-     FILTER
-  ------------------------------------------------------------------------ */
+  /* ==========================================================================
+     FILTER + SEARCH
+  ========================================================================== */
 
   const filteredGoals = useMemo(() => {
-    if (filter === "all") {
-      return goals;
-    }
+    const query = search.trim().toLowerCase();
 
-    return goals.filter((goal) => goal.status === filter);
-  }, [goals, filter]);
+    return goals.filter((goal) => {
+      const matchesStatus = filter === "all" || goal.status === filter;
 
-  /* ------------------------------------------------------------------------
+      if (!matchesStatus) {
+        return false;
+      }
+
+      if (!query) {
+        return true;
+      }
+
+      const title = String(goal.title || "").toLowerCase();
+
+      const category = String(
+        getGoalCategoryLabel(goal.category),
+      ).toLowerCase();
+
+      return title.includes(query) || category.includes(query);
+    });
+  }, [goals, filter, search]);
+
+  /* ==========================================================================
+     RESET PAGINATION
+  ========================================================================== */
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [filter, search]);
+
+  /* ==========================================================================
+     VISIBLE GOALS
+  ========================================================================== */
+
+  const visibleGoals = useMemo(() => {
+    return filteredGoals.slice(0, visibleCount);
+  }, [filteredGoals, visibleCount]);
+
+  const hasMore = visibleCount < filteredGoals.length;
+
+  /* ==========================================================================
      STATS
-  ------------------------------------------------------------------------ */
+  ========================================================================== */
 
   const stats = useMemo(() => {
     return {
@@ -702,31 +942,80 @@ export default function GoalsScreen() {
     };
   }, [goals]);
 
-  /* ------------------------------------------------------------------------
-     AVERAGE
-  ------------------------------------------------------------------------ */
+  /* ==========================================================================
+     AVERAGE PROGRESS
+  ========================================================================== */
 
-  const averageProgress =
-    goals.length > 0
-      ? Math.round(
-          goals.reduce(
-            (total, goal) => total + clampProgress(goal.progressPercentage),
-            0,
-          ) / goals.length,
-        )
-      : 0;
+  const averageProgress = useMemo(() => {
+    if (goals.length === 0) {
+      return 0;
+    }
 
-  /* ------------------------------------------------------------------------
-     LOADING
-  ------------------------------------------------------------------------ */
+    return Math.round(
+      goals.reduce(
+        (total, goal) => total + clampProgress(goal.progressPercentage),
+        0,
+      ) / goals.length,
+    );
+  }, [goals]);
 
-  if (loading) {
+  /* ==========================================================================
+     LOAD MORE
+  ========================================================================== */
+
+  const loadMoreGoals = useCallback(() => {
+    if (loadingMore || !hasMore || loading) {
+      return;
+    }
+
+    setLoadingMore(true);
+
+    /*
+     * Small delay gives the user a visible loading
+     * state while keeping the UI smooth.
+     */
+    setTimeout(() => {
+      setVisibleCount((current) =>
+        Math.min(current + PAGE_SIZE, filteredGoals.length),
+      );
+
+      setLoadingMore(false);
+    }, 350);
+  }, [loadingMore, hasMore, loading, filteredGoals.length]);
+
+  /* ==========================================================================
+     SCROLL
+  ========================================================================== */
+
+  const handleScroll = useCallback(
+    (event: any) => {
+      const { contentOffset, contentSize, layoutMeasurement } =
+        event.nativeEvent;
+
+      const distanceFromBottom =
+        contentSize.height - (contentOffset.y + layoutMeasurement.height);
+
+      /*
+       * Load before reaching the exact bottom.
+       */
+      if (distanceFromBottom < 220) {
+        loadMoreGoals();
+      }
+    },
+    [loadMoreGoals],
+  );
+
+  /* ==========================================================================
+     INITIAL LOADING
+  ========================================================================== */
+
+  if (loading && goals.length === 0) {
     return <GoalsLoading />;
   }
 
-  /* ------------------------------------------------------------------------
-     ERROR
-  ------------------------------------------------------------------------ */
+  /* ==========================================================================
+     INITIAL ERROR
+  ========================================================================== */
 
   if (error && goals.length === 0) {
     return (
@@ -740,190 +1029,247 @@ export default function GoalsScreen() {
     );
   }
 
-  /* ------------------------------------------------------------------------
+  /* ==========================================================================
      RENDER
-  ------------------------------------------------------------------------ */
+  ========================================================================== */
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-[#F7F3EA]">
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={async () => {
-              setRefreshing(true);
-
-              await loadGoals();
-            }}
-            tintColor={COLORS.green}
-          />
-        }
-        contentContainerStyle={{
-          paddingBottom: 45,
-        }}
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* ================================================================
-            HEADER
-        ================================================================ */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="none"
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadGoals(true)}
+              tintColor={COLORS.green}
+              colors={[COLORS.green]}
+            />
+          }
+          contentContainerStyle={{
+            /*
+             * Keep this small.
+             *
+             * Android gets keyboard height + 32 so the
+             * last goal can be reached while keyboard
+             * stays open.
+             */
+            paddingBottom: Platform.OS === "android" ? keyboardHeight + 32 : 32,
+          }}
+        >
+          {/* ================================================================
+              HEADER
+          ================================================================ */}
 
-        <GoalsHeader onCreate={() => router.push("/(main)/goal-create")} />
-
-        {/* ================================================================
-            JOURNEY
-        ================================================================ */}
-
-        <JourneyCard
-          averageProgress={averageProgress}
-          active={stats.active}
-          total={stats.total}
-        />
-
-        {/* ================================================================
-            QUICK STATS
-        ================================================================ */}
-
-        <View className="mt-3 flex-row px-[18px]">
-          <MiniStat icon="layers-outline" label="Total" value={stats.total} />
-
-          <View className="w-2" />
-
-          <MiniStat
-            icon="radio-button-on-outline"
-            label="Active"
-            value={stats.active}
-            active
+          <GoalsHeader
+            onBack={() => router.back()}
+            onCreate={() => router.push("/(main)/goal-create")}
           />
 
-          <View className="w-2" />
+          {/* ================================================================
+              SEARCH
+          ================================================================ */}
 
-          <MiniStat
-            icon="checkmark-circle-outline"
-            label="Done"
-            value={stats.completed}
+          <GoalSearch value={search} onChange={setSearch} />
+
+          {/* ================================================================
+              STATS
+          ================================================================ */}
+
+          <GoalStats
+            total={stats.total}
+            active={stats.active}
+            completed={stats.completed}
           />
-        </View>
 
-        {/* ================================================================
-            GOALS SECTION
-        ================================================================ */}
+          {/* ================================================================
+              OVERALL PROGRESS
+          ================================================================ */}
 
-        <View className="mt-8 px-[18px]">
-          <View className="flex-row items-end justify-between">
-            <View className="flex-1">
-              <Text className="font-serif text-[19px] font-bold text-[#263128]">
-                Your intentions
-              </Text>
+          <ProgressSummary progress={averageProgress} total={stats.total} />
 
-              <Text className="mt-1 text-[9px] text-[#8B8E86]">
-                {filteredGoals.length}{" "}
-                {filteredGoals.length === 1 ? "goal" : "goals"} showing
-              </Text>
+          {/* ================================================================
+              GOALS
+          ================================================================ */}
+
+          <View className="mt-7 px-[18px]">
+            {/* Heading */}
+
+            <View className="flex-row items-end justify-between">
+              <View className="flex-1">
+                <Text className="font-serif text-[20px] font-bold text-[#263128]">
+                  Your goals
+                </Text>
+
+                <Text className="mt-1 text-[9px] text-[#8B8E86]">
+                  {filteredGoals.length}{" "}
+                  {filteredGoals.length === 1 ? "goal" : "goals"} found
+                </Text>
+              </View>
+
+              {filteredGoals.length > 0 ? (
+                <Text className="text-[9px] text-[#8B8E86]">
+                  Showing {Math.min(visibleCount, filteredGoals.length)} of{" "}
+                  {filteredGoals.length}
+                </Text>
+              ) : null}
             </View>
 
-            <View className="flex-row items-center">
-              <Ionicons
-                name="sparkles-outline"
-                size={12}
-                color={COLORS.green}
-              />
+            {/* ============================================================
+                FILTERS
+            ============================================================ */}
 
-              <Text className="ml-1 text-[8px] font-semibold text-[#718071]">
-                One step at a time
-              </Text>
-            </View>
-          </View>
-
-          {/* ==============================================================
-              FILTERS
-          ============================================================== */}
-
-          <View className="mt-4">
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <FilterButton
-                label="All"
-                count={stats.total}
-                active={filter === "all"}
-                onPress={() => setFilter("all")}
-              />
-
-              <FilterButton
-                label="Active"
-                count={stats.active}
-                active={filter === "active"}
-                onPress={() => setFilter("active")}
-              />
-
-              <FilterButton
-                label="Paused"
-                count={stats.paused}
-                active={filter === "paused"}
-                onPress={() => setFilter("paused")}
-              />
-
-              <FilterButton
-                label="Completed"
-                count={stats.completed}
-                active={filter === "completed"}
-                onPress={() => setFilter("completed")}
-              />
-
-              <FilterButton
-                label="Cancelled"
-                count={stats.cancelled}
-                active={filter === "cancelled"}
-                onPress={() => setFilter("cancelled")}
-              />
-            </ScrollView>
-          </View>
-
-          {/* ==============================================================
-              LIST
-          ============================================================== */}
-
-          <View className="mt-4">
-            {filteredGoals.length === 0 ? (
-              <EmptyGoals
-                filter={filter}
-                onCreate={() => router.push("/(main)/goal-create")}
-              />
-            ) : (
-              filteredGoals.map((goal) => (
-                <GoalCard
-                  key={goal._id}
-                  goal={goal}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(main)/goals/[id]",
-                      params: {
-                        id: goal._id,
-                      },
-                    })
-                  }
+            <View className="mt-4">
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <FilterButton
+                  label="All"
+                  count={stats.total}
+                  active={filter === "all"}
+                  onPress={() => setFilter("all")}
                 />
-              ))
-            )}
+
+                <FilterButton
+                  label="Active"
+                  count={stats.active}
+                  active={filter === "active"}
+                  onPress={() => setFilter("active")}
+                />
+
+                <FilterButton
+                  label="Paused"
+                  count={stats.paused}
+                  active={filter === "paused"}
+                  onPress={() => setFilter("paused")}
+                />
+
+                <FilterButton
+                  label="Completed"
+                  count={stats.completed}
+                  active={filter === "completed"}
+                  onPress={() => setFilter("completed")}
+                />
+
+                <FilterButton
+                  label="Cancelled"
+                  count={stats.cancelled}
+                  active={filter === "cancelled"}
+                  onPress={() => setFilter("cancelled")}
+                />
+              </ScrollView>
+            </View>
+
+            {/* ============================================================
+                REFRESH ERROR
+            ============================================================ */}
+
+            {error && goals.length > 0 ? (
+              <View className="mt-3 flex-row items-center rounded-[8px] border border-[#E7D8BF] bg-[#FBF4E8] px-3 py-2.5">
+                <Ionicons
+                  name="information-circle-outline"
+                  size={15}
+                  color={COLORS.amber}
+                />
+
+                <Text className="ml-2 flex-1 text-[9px] leading-[14px] text-[#7D6745]">
+                  {error}
+                </Text>
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => loadGoals()}
+                >
+                  <Text className="text-[9px] font-bold text-[#7D6745]">
+                    Retry
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
+            {/* ============================================================
+                LIST
+            ============================================================ */}
+
+            <View className="mt-4">
+              {filteredGoals.length === 0 ? (
+                <EmptyGoals
+                  filter={filter}
+                  search={search}
+                  onClearSearch={() => setSearch("")}
+                  onCreate={() => router.push("/(main)/goal-create")}
+                />
+              ) : (
+                <>
+                  {visibleGoals.map((goal) => (
+                    <GoalCard
+                      key={goal._id}
+                      goal={goal}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/(main)/goals/[id]",
+                          params: {
+                            id: goal._id,
+                          },
+                        })
+                      }
+                    />
+                  ))}
+
+                  {/* ======================================================
+                      LOAD MORE
+                  ====================================================== */}
+
+                  {loadingMore ? (
+                    <View className="items-center py-5">
+                      <ActivityIndicator size="small" color={COLORS.green} />
+
+                      <Text className="mt-2 text-[9px] text-[#8B8E86]">
+                        Loading more goals...
+                      </Text>
+                    </View>
+                  ) : hasMore ? (
+                    <View className="items-center py-4">
+                      <Text className="text-[9px] text-[#A0A29A]">
+                        Scroll for more
+                      </Text>
+                    </View>
+                  ) : (
+                    <View className="items-center py-4">
+                      <View className="h-px w-10 bg-[#DDD8CE]" />
+
+                      <Text className="mt-3 text-[9px] text-[#A0A29A]">
+                        All goals shown
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
           </View>
-        </View>
 
-        {/* ================================================================
-            BOTTOM NOTE
-        ================================================================ */}
+          {/* ================================================================
+              FOOTER
+          ================================================================ */}
 
-        {filteredGoals.length > 0 ? (
-          <View className="items-center px-10 pb-3 pt-5">
-            <Ionicons name="leaf-outline" size={17} color="#A5A99F" />
-
-            <Text className="mt-2 text-center font-serif text-[13px] text-[#858980]">
-              Progress is not about perfection.
-            </Text>
-
-            <Text className="mt-1 text-center text-[8px] leading-[13px] text-[#A0A29A]">
-              Keep showing up for yourself, one day at a time.
-            </Text>
-          </View>
-        ) : null}
-      </ScrollView>
+          {filteredGoals.length > 0 ? (
+            <View className="items-center px-10 pb-2 pt-4">
+              <Text className="text-center text-[9px] leading-[14px] text-[#A0A29A]">
+                Keep your goals simple and achievable.
+              </Text>
+            </View>
+          ) : null}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

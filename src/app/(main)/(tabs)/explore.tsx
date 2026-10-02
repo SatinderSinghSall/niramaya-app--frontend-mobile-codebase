@@ -2,6 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   Text,
@@ -1298,520 +1301,531 @@ export default function ExploreScreen() {
         backgroundColor: COLORS.background,
       }}
     >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={COLORS.green}
-          />
-        }
-        contentContainerStyle={{
-          paddingHorizontal: 18,
-          paddingTop: 14,
-          paddingBottom: 45,
-        }}
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 4 : 0}
       >
-        {/* ================================================================== */}
-        {/* HEADER                                                             */}
-        {/* ================================================================== */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="none"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={COLORS.green}
+            />
+          }
+          contentContainerStyle={{
+            paddingHorizontal: 18,
+            paddingTop: 14,
+            paddingBottom: 45,
+          }}
+        >
+          {/* ================================================================== */}
+          {/* HEADER                                                             */}
+          {/* ================================================================== */}
 
-        <ExploreHeader />
+          <ExploreHeader />
 
-        {/* ================================================================== */}
-        {/* SEARCH                                                             */}
-        {/* ================================================================== */}
+          {/* ================================================================== */}
+          {/* SEARCH                                                             */}
+          {/* ================================================================== */}
 
-        <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
-        {/* ================================================================== */}
-        {/* SEARCH RESULTS                                                     */}
-        {/* ================================================================== */}
+          {/* ================================================================== */}
+          {/* SEARCH RESULTS                                                     */}
+          {/* ================================================================== */}
 
-        {noSearchResults ? (
-          <View
-            style={{
-              marginTop: 35,
-              alignItems: "center",
-              paddingHorizontal: 25,
-            }}
-          >
+          {noSearchResults ? (
             <View
               style={{
-                width: 58,
-                height: 58,
-                borderRadius: 29,
+                marginTop: 35,
                 alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: COLORS.lightGreen,
+                paddingHorizontal: 25,
               }}
             >
-              <Ionicons name="search-outline" size={25} color={COLORS.green} />
-            </View>
-
-            <Text
-              style={{
-                marginTop: 15,
-                color: COLORS.text,
-                fontFamily: "serif",
-                fontSize: 20,
-                fontWeight: "700",
-                textAlign: "center",
-              }}
-            >
-              Nothing found
-            </Text>
-
-            <Text
-              style={{
-                marginTop: 7,
-                color: COLORS.muted,
-                fontSize: 12,
-                lineHeight: 18,
-                textAlign: "center",
-              }}
-            >
-              Try another word such as yoga, breathing, sleep or stress.
-            </Text>
-          </View>
-        ) : (
-          <>
-            {/* ================================================================ */}
-            {/* CATEGORIES                                                       */}
-            {/* ================================================================ */}
-
-            {!hasSearch ? (
               <View
                 style={{
-                  marginTop: 32,
+                  width: 58,
+                  height: 58,
+                  borderRadius: 29,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: COLORS.lightGreen,
                 }}
               >
-                <SectionHeader
-                  title="Categories"
-                  subtitle="Explore ways to support your wellbeing"
+                <Ionicons
+                  name="search-outline"
+                  size={25}
+                  color={COLORS.green}
                 />
-
-                <CategoryRow
-                  categories={WELLNESS_CATEGORIES}
-                  selected={yogaCategory}
-                  onSelect={setYogaCategory}
-                />
-
-                <ProgressExploreCard />
               </View>
-            ) : null}
 
-            {/* ================================================================ */}
-            {/* FOR YOU                                                          */}
-            {/* ================================================================ */}
-
-            {recommendations.length > 0 &&
-            filteredRecommendations.length > 0 ? (
-              <View
+              <Text
                 style={{
-                  marginTop: 32,
+                  marginTop: 15,
+                  color: COLORS.text,
+                  fontFamily: "serif",
+                  fontSize: 20,
+                  fontWeight: "700",
+                  textAlign: "center",
                 }}
               >
-                <SectionHeader
-                  title={hasSearch ? "Matches" : "For you"}
-                  subtitle={
-                    hasSearch
-                      ? "Practices matching your search"
-                      : "Wellness selected from your journey"
-                  }
-                />
+                Nothing found
+              </Text>
 
-                {recommendedYoga.length > 0 ? (
+              <Text
+                style={{
+                  marginTop: 7,
+                  color: COLORS.muted,
+                  fontSize: 12,
+                  lineHeight: 18,
+                  textAlign: "center",
+                }}
+              >
+                Try another word such as yoga, breathing, sleep or stress.
+              </Text>
+            </View>
+          ) : (
+            <>
+              {/* ================================================================ */}
+              {/* CATEGORIES                                                       */}
+              {/* ================================================================ */}
+
+              {!hasSearch ? (
+                <View
+                  style={{
+                    marginTop: 32,
+                  }}
+                >
+                  <SectionHeader
+                    title="Categories"
+                    subtitle="Explore ways to support your wellbeing"
+                  />
+
+                  <CategoryRow
+                    categories={WELLNESS_CATEGORIES}
+                    selected={yogaCategory}
+                    onSelect={setYogaCategory}
+                  />
+
+                  <ProgressExploreCard />
+                </View>
+              ) : null}
+
+              {/* ================================================================ */}
+              {/* FOR YOU                                                          */}
+              {/* ================================================================ */}
+
+              {recommendations.length > 0 &&
+              filteredRecommendations.length > 0 ? (
+                <View
+                  style={{
+                    marginTop: 32,
+                  }}
+                >
+                  <SectionHeader
+                    title={hasSearch ? "Matches" : "For you"}
+                    subtitle={
+                      hasSearch
+                        ? "Practices matching your search"
+                        : "Wellness selected from your journey"
+                    }
+                  />
+
+                  {recommendedYoga.length > 0 ? (
+                    <ContentRow
+                      items={recommendedYoga}
+                      type="yoga"
+                      emptyTitle=""
+                      emptyDescription=""
+                      onPress={openYoga}
+                    />
+                  ) : null}
+
+                  {recommendedAyurveda.length > 0 ? (
+                    <View
+                      style={{
+                        marginTop: recommendedYoga.length > 0 ? 16 : 0,
+                      }}
+                    >
+                      <ContentRow
+                        items={recommendedAyurveda}
+                        type="ayurveda"
+                        emptyTitle=""
+                        emptyDescription=""
+                        onPress={openAyurveda}
+                      />
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
+
+              {/* Goals CTA */}
+              <GoalsCTA />
+
+              {/* ================================================================ */}
+              {/* YOGA                                                             */}
+              {/* ================================================================ */}
+
+              {filteredYoga.length > 0 ? (
+                <View
+                  style={{
+                    marginTop: 34,
+                  }}
+                >
+                  <SectionHeader
+                    title="Yoga"
+                    subtitle="Practices for body and mind"
+                    action={!hasSearch ? "See all" : undefined}
+                    onAction={
+                      !hasSearch ? () => router.push("/(main)/yoga") : undefined
+                    }
+                  />
+
                   <ContentRow
-                    items={recommendedYoga}
+                    items={filteredYoga}
                     type="yoga"
-                    emptyTitle=""
-                    emptyDescription=""
+                    emptyTitle="Yoga is coming soon"
+                    emptyDescription="There are no featured yoga practices available right now."
                     onPress={openYoga}
                   />
-                ) : null}
+                </View>
+              ) : null}
 
-                {recommendedAyurveda.length > 0 ? (
+              {/* Consultation CTA */}
+              <ConsultationCTA />
+
+              {/* ================================================================ */}
+              {/* AYURVEDA                                                         */}
+              {/* ================================================================ */}
+
+              {filteredAyurveda.length > 0 ? (
+                <View
+                  style={{
+                    marginTop: 34,
+                  }}
+                >
+                  <SectionHeader
+                    title="Ayurveda"
+                    subtitle="Traditional wellness practices"
+                    action={!hasSearch ? "See all" : undefined}
+                    onAction={
+                      !hasSearch
+                        ? () => router.push("/(main)/ayurveda")
+                        : undefined
+                    }
+                  />
+
+                  {!hasSearch ? (
+                    <CategoryRow
+                      categories={ayurvedaCategories}
+                      selected={ayurvedaCategory}
+                      onSelect={setAyurvedaCategory}
+                    />
+                  ) : null}
+
                   <View
                     style={{
-                      marginTop: recommendedYoga.length > 0 ? 16 : 0,
+                      marginTop: hasSearch ? 0 : 12,
                     }}
                   >
                     <ContentRow
-                      items={recommendedAyurveda}
+                      items={filteredAyurveda}
                       type="ayurveda"
-                      emptyTitle=""
-                      emptyDescription=""
+                      emptyTitle="Ayurveda is coming soon"
+                      emptyDescription="There are no featured Ayurvedic recommendations available right now."
                       onPress={openAyurveda}
                     />
                   </View>
-                ) : null}
-              </View>
-            ) : null}
-
-            {/* Goals CTA */}
-            <GoalsCTA />
-
-            {/* ================================================================ */}
-            {/* YOGA                                                             */}
-            {/* ================================================================ */}
-
-            {filteredYoga.length > 0 ? (
-              <View
-                style={{
-                  marginTop: 34,
-                }}
-              >
-                <SectionHeader
-                  title="Yoga"
-                  subtitle="Practices for body and mind"
-                  action={!hasSearch ? "See all" : undefined}
-                  onAction={
-                    !hasSearch ? () => router.push("/(main)/yoga") : undefined
-                  }
-                />
-
-                <ContentRow
-                  items={filteredYoga}
-                  type="yoga"
-                  emptyTitle="Yoga is coming soon"
-                  emptyDescription="There are no featured yoga practices available right now."
-                  onPress={openYoga}
-                />
-              </View>
-            ) : null}
-
-            {/* Consultation CTA */}
-            <ConsultationCTA />
-
-            {/* ================================================================ */}
-            {/* AYURVEDA                                                         */}
-            {/* ================================================================ */}
-
-            {filteredAyurveda.length > 0 ? (
-              <View
-                style={{
-                  marginTop: 34,
-                }}
-              >
-                <SectionHeader
-                  title="Ayurveda"
-                  subtitle="Traditional wellness practices"
-                  action={!hasSearch ? "See all" : undefined}
-                  onAction={
-                    !hasSearch
-                      ? () => router.push("/(main)/ayurveda")
-                      : undefined
-                  }
-                />
-
-                {!hasSearch ? (
-                  <CategoryRow
-                    categories={ayurvedaCategories}
-                    selected={ayurvedaCategory}
-                    onSelect={setAyurvedaCategory}
-                  />
-                ) : null}
-
-                <View
-                  style={{
-                    marginTop: hasSearch ? 0 : 12,
-                  }}
-                >
-                  <ContentRow
-                    items={filteredAyurveda}
-                    type="ayurveda"
-                    emptyTitle="Ayurveda is coming soon"
-                    emptyDescription="There are no featured Ayurvedic recommendations available right now."
-                    onPress={openAyurveda}
-                  />
                 </View>
-              </View>
-            ) : null}
+              ) : null}
 
-            {/* Health History CTA */}
-            <HealthProfileCTA />
+              {/* Health History CTA */}
+              <HealthProfileCTA />
 
-            {/* ================================================================ */}
-            {/* WISDOM                                                           */}
-            {/* ================================================================ */}
+              {/* ================================================================ */}
+              {/* WISDOM                                                           */}
+              {/* ================================================================ */}
 
-            {!hasSearch ? (
-              <View
-                style={{
-                  marginTop: 4,
-                }}
-              >
-                <SectionHeader
-                  title="Wisdom"
-                  subtitle="Simple ideas for everyday wellbeing"
-                />
-
+              {!hasSearch ? (
                 <View
                   style={{
-                    flexDirection: "row",
+                    marginTop: 4,
                   }}
                 >
-                  <TouchableOpacity
-                    activeOpacity={0.88}
-                    onPress={() => router.push("/(main)/search")}
-                    style={{
-                      flex: 1,
-                      minHeight: 125,
-                      marginRight: 6,
-                      padding: 16,
-                      borderRadius: 18,
-                      justifyContent: "flex-end",
-                      backgroundColor: "#D2DFC9",
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 34,
-                        height: 34,
-                        borderRadius: 17,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: "rgba(255,255,255,0.48)",
-                        marginBottom: 25,
-                      }}
-                    >
-                      <Ionicons
-                        name="book-outline"
-                        size={17}
-                        color={COLORS.darkGreen}
-                      />
-                    </View>
-
-                    <Text
-                      style={{
-                        color: COLORS.text,
-                        fontFamily: "serif",
-                        fontSize: 18,
-                        fontWeight: "700",
-                      }}
-                    >
-                      Learn
-                    </Text>
-
-                    <Text
-                      style={{
-                        marginTop: 3,
-                        color: COLORS.muted,
-                        fontSize: 10,
-                      }}
-                    >
-                      Discover wellness practices
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    activeOpacity={0.88}
-                    onPress={() => router.push("/(main)/favorites")}
-                    style={{
-                      flex: 1,
-                      minHeight: 125,
-                      marginLeft: 6,
-                      padding: 16,
-                      borderRadius: 18,
-                      justifyContent: "flex-end",
-                      backgroundColor: "#E8DDC8",
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 34,
-                        height: 34,
-                        borderRadius: 17,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: "rgba(255,255,255,0.48)",
-                        marginBottom: 25,
-                      }}
-                    >
-                      <Ionicons
-                        name="heart-outline"
-                        size={17}
-                        color={COLORS.text}
-                      />
-                    </View>
-
-                    <Text
-                      style={{
-                        color: COLORS.text,
-                        fontFamily: "serif",
-                        fontSize: 18,
-                        fontWeight: "700",
-                      }}
-                    >
-                      Favorites
-                    </Text>
-
-                    <Text
-                      style={{
-                        marginTop: 3,
-                        color: COLORS.muted,
-                        fontSize: 10,
-                      }}
-                    >
-                      Keep what speaks to you
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : null}
-
-            {/* ================================================================ */}
-            {/* AMBIENCE                                                         */}
-            {/* ================================================================ */}
-
-            {!hasSearch ? (
-              <View
-                style={{
-                  marginTop: 36,
-                }}
-              >
-                <SectionHeader
-                  title="Set your ambience"
-                  subtitle="Create a little space for yourself"
-                />
-
-                <View
-                  style={{
-                    minHeight: 155,
-                    padding: 19,
-                    borderRadius: 21,
-                    overflow: "hidden",
-                    backgroundColor: "#B7CDBD",
-                  }}
-                >
-                  {/* Decorative circle */}
-
-                  <View
-                    style={{
-                      position: "absolute",
-                      width: 125,
-                      height: 125,
-                      borderRadius: 63,
-                      right: -35,
-                      top: -40,
-                      backgroundColor: "rgba(255,255,255,0.15)",
-                    }}
+                  <SectionHeader
+                    title="Wisdom"
+                    subtitle="Simple ideas for everyday wellbeing"
                   />
 
                   <View
                     style={{
-                      width: 35,
-                      height: 35,
-                      borderRadius: 18,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: "rgba(255,255,255,0.38)",
+                      flexDirection: "row",
                     }}
                   >
-                    <Ionicons name="leaf-outline" size={18} color="#35523C" />
+                    <TouchableOpacity
+                      activeOpacity={0.88}
+                      onPress={() => router.push("/(main)/search")}
+                      style={{
+                        flex: 1,
+                        minHeight: 125,
+                        marginRight: 6,
+                        padding: 16,
+                        borderRadius: 18,
+                        justifyContent: "flex-end",
+                        backgroundColor: "#D2DFC9",
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: "rgba(255,255,255,0.48)",
+                          marginBottom: 25,
+                        }}
+                      >
+                        <Ionicons
+                          name="book-outline"
+                          size={17}
+                          color={COLORS.darkGreen}
+                        />
+                      </View>
+
+                      <Text
+                        style={{
+                          color: COLORS.text,
+                          fontFamily: "serif",
+                          fontSize: 18,
+                          fontWeight: "700",
+                        }}
+                      >
+                        Learn
+                      </Text>
+
+                      <Text
+                        style={{
+                          marginTop: 3,
+                          color: COLORS.muted,
+                          fontSize: 10,
+                        }}
+                      >
+                        Discover wellness practices
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      activeOpacity={0.88}
+                      onPress={() => router.push("/(main)/favorites")}
+                      style={{
+                        flex: 1,
+                        minHeight: 125,
+                        marginLeft: 6,
+                        padding: 16,
+                        borderRadius: 18,
+                        justifyContent: "flex-end",
+                        backgroundColor: "#E8DDC8",
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 17,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: "rgba(255,255,255,0.48)",
+                          marginBottom: 25,
+                        }}
+                      >
+                        <Ionicons
+                          name="heart-outline"
+                          size={17}
+                          color={COLORS.text}
+                        />
+                      </View>
+
+                      <Text
+                        style={{
+                          color: COLORS.text,
+                          fontFamily: "serif",
+                          fontSize: 18,
+                          fontWeight: "700",
+                        }}
+                      >
+                        Favorites
+                      </Text>
+
+                      <Text
+                        style={{
+                          marginTop: 3,
+                          color: COLORS.muted,
+                          fontSize: 10,
+                        }}
+                      >
+                        Keep what speaks to you
+                      </Text>
+                    </TouchableOpacity>
                   </View>
+                </View>
+              ) : null}
 
-                  <Text
+              {/* ================================================================ */}
+              {/* AMBIENCE                                                         */}
+              {/* ================================================================ */}
+
+              {!hasSearch ? (
+                <View
+                  style={{
+                    marginTop: 36,
+                  }}
+                >
+                  <SectionHeader
+                    title="Set your ambience"
+                    subtitle="Create a little space for yourself"
+                  />
+
+                  <View
                     style={{
-                      marginTop: 13,
-                      maxWidth: 240,
-                      color: "#20372A",
-                      fontFamily: "serif",
-                      fontSize: 21,
-                      lineHeight: 27,
-                      fontWeight: "700",
+                      minHeight: 155,
+                      padding: 19,
+                      borderRadius: 21,
+                      overflow: "hidden",
+                      backgroundColor: "#B7CDBD",
                     }}
                   >
-                    Make some space for stillness.
-                  </Text>
+                    {/* Decorative circle */}
 
-                  <Text
-                    style={{
-                      marginTop: 5,
-                      maxWidth: 255,
-                      color: "#476251",
-                      fontSize: 11,
-                      lineHeight: 17,
-                    }}
-                  >
-                    Explore practices that help you slow down, breathe and
-                    reconnect.
-                  </Text>
+                    <View
+                      style={{
+                        position: "absolute",
+                        width: 125,
+                        height: 125,
+                        borderRadius: 63,
+                        right: -35,
+                        top: -40,
+                        backgroundColor: "rgba(255,255,255,0.15)",
+                      }}
+                    />
 
-                  <TouchableOpacity
-                    onPress={() => router.push("/(main)/yoga")}
-                    activeOpacity={0.85}
-                    style={{
-                      alignSelf: "flex-start",
-                      marginTop: 13,
-                      paddingHorizontal: 14,
-                      paddingVertical: 9,
-                      borderRadius: 10,
-                      backgroundColor: "#FFFFFF",
-                    }}
-                  >
+                    <View
+                      style={{
+                        width: 35,
+                        height: 35,
+                        borderRadius: 18,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: "rgba(255,255,255,0.38)",
+                      }}
+                    >
+                      <Ionicons name="leaf-outline" size={18} color="#35523C" />
+                    </View>
+
                     <Text
                       style={{
-                        color: COLORS.green,
-                        fontSize: 10,
+                        marginTop: 13,
+                        maxWidth: 240,
+                        color: "#20372A",
+                        fontFamily: "serif",
+                        fontSize: 21,
+                        lineHeight: 27,
                         fontWeight: "700",
                       }}
                     >
-                      Discover practices
+                      Make some space for stillness.
                     </Text>
-                  </TouchableOpacity>
+
+                    <Text
+                      style={{
+                        marginTop: 5,
+                        maxWidth: 255,
+                        color: "#476251",
+                        fontSize: 11,
+                        lineHeight: 17,
+                      }}
+                    >
+                      Explore practices that help you slow down, breathe and
+                      reconnect.
+                    </Text>
+
+                    <TouchableOpacity
+                      onPress={() => router.push("/(main)/yoga")}
+                      activeOpacity={0.85}
+                      style={{
+                        alignSelf: "flex-start",
+                        marginTop: 13,
+                        paddingHorizontal: 14,
+                        paddingVertical: 9,
+                        borderRadius: 10,
+                        backgroundColor: "#FFFFFF",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: COLORS.green,
+                          fontSize: 10,
+                          fontWeight: "700",
+                        }}
+                      >
+                        Discover practices
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            ) : null}
+              ) : null}
 
-            {/* ================================================================ */}
-            {/* FOOTER                                                           */}
-            {/* ================================================================ */}
+              {/* ================================================================ */}
+              {/* FOOTER                                                           */}
+              {/* ================================================================ */}
 
-            {!hasSearch ? (
-              <View
-                style={{
-                  alignItems: "center",
-                  paddingTop: 48,
-                  paddingBottom: 10,
-                }}
-              >
+              {!hasSearch ? (
                 <View
                   style={{
-                    width: 34,
-                    height: 1,
-                    backgroundColor: COLORS.border,
-                  }}
-                />
-
-                <Text
-                  style={{
-                    marginTop: 14,
-                    color: COLORS.softMuted,
-                    fontFamily: "serif",
-                    fontSize: 15,
+                    alignItems: "center",
+                    paddingTop: 48,
+                    paddingBottom: 10,
                   }}
                 >
-                  Niramaya
-                </Text>
+                  <View
+                    style={{
+                      width: 34,
+                      height: 1,
+                      backgroundColor: COLORS.border,
+                    }}
+                  />
 
-                <Text
-                  style={{
-                    marginTop: 3,
-                    color: COLORS.softMuted,
-                    fontSize: 10,
-                  }}
-                >
-                  A space for your wellbeing
-                </Text>
-              </View>
-            ) : null}
-          </>
-        )}
-      </ScrollView>
+                  <Text
+                    style={{
+                      marginTop: 14,
+                      color: COLORS.softMuted,
+                      fontFamily: "serif",
+                      fontSize: 15,
+                    }}
+                  >
+                    Niramaya
+                  </Text>
+
+                  <Text
+                    style={{
+                      marginTop: 3,
+                      color: COLORS.softMuted,
+                      fontSize: 10,
+                    }}
+                  >
+                    A space for your wellbeing
+                  </Text>
+                </View>
+              ) : null}
+            </>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -1,11 +1,16 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
+
 import { Ionicons } from "@expo/vector-icons";
+
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+
+import React, { useMemo, useState, useEffect } from "react";
+
 import {
   ActivityIndicator,
-  Alert,
+  Keyboard,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -13,9 +18,11 @@ import {
   TextInput,
   View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { createConsultation } from "../../services/consultation.service";
+
 import type {
   ConsultationType,
   CreateConsultationPayload,
@@ -23,46 +30,75 @@ import type {
 
 const COLORS = {
   background: "#F7F5EF",
+
   surface: "#FFFFFF",
+
   primary: "#4D6A50",
+
   primaryDark: "#304B36",
+
   primarySoft: "#EAF1E7",
+
   text: "#263128",
+
   textSecondary: "#5F6A61",
+
   muted: "#858D85",
+
   border: "#E4E2DA",
+
   danger: "#A65C50",
+
   disabled: "#AAB5AB",
 };
 
 const TIME_OPTIONS = [
   "09:00 AM",
+
   "10:00 AM",
+
   "11:00 AM",
+
   "12:00 PM",
+
   "01:00 PM",
+
   "02:00 PM",
+
   "03:00 PM",
+
   "04:00 PM",
+
   "05:00 PM",
+
   "06:00 PM",
 ];
 
 const GOAL_OPTIONS = [
   "Stress management",
+
   "Better sleep",
+
   "Digestion",
+
   "Weight management",
+
   "Fitness",
+
   "Yoga guidance",
+
   "Mental wellbeing",
+
   "Skin & hair wellness",
+
   "General wellbeing",
 ];
 
 const formatDateForApi = (date: Date) => {
   const year = date.getFullYear();
+
   const month = String(date.getMonth() + 1).padStart(2, "0");
+
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
@@ -71,8 +107,11 @@ const formatDateForApi = (date: Date) => {
 const formatDisplayDate = (date: Date) => {
   return date.toLocaleDateString("en-IN", {
     weekday: "short",
+
     day: "numeric",
+
     month: "short",
+
     year: "numeric",
   });
 };
@@ -81,6 +120,7 @@ const getTomorrow = () => {
   const date = new Date();
 
   date.setHours(0, 0, 0, 0);
+
   date.setDate(date.getDate() + 1);
 
   return date;
@@ -91,6 +131,7 @@ const getErrorMessage = (error: any) => {
 
   if (Array.isArray(response?.errors) && response.errors.length > 0) {
     return response.errors
+
       .map((item: { field?: string; message?: string }) => {
         if (item.field && item.message) {
           return `${item.field}: ${item.message}`;
@@ -98,6 +139,7 @@ const getErrorMessage = (error: any) => {
 
         return item.message || "Invalid consultation details";
       })
+
       .join("\n");
   }
 
@@ -113,38 +155,50 @@ export default function ConsultationBookScreen() {
     useState<ConsultationType>("online");
 
   const [preferredDate, setPreferredDate] = useState(getTomorrow);
+
   const [preferredTime, setPreferredTime] = useState("");
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+
   const [showTimeOptions, setShowTimeOptions] = useState(false);
 
   const [concern, setConcern] = useState("");
+
   const [notes, setNotes] = useState("");
 
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
 
   const [saving, setSaving] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [iosDateDraft, setIosDateDraft] = useState(getTomorrow);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") {
+      return;
+    }
+
+    const showSubscription = Keyboard.addListener(
+      "keyboardDidShow",
+      (event) => {
+        setKeyboardHeight(event.endCoordinates.height);
+      },
+    );
+
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const concernLength = concern.trim().length;
-  const notesLength = notes.trim().length;
 
-  const isValid = useMemo(() => {
-    return (
-      consultationType.length > 0 &&
-      preferredDate instanceof Date &&
-      !Number.isNaN(preferredDate.getTime()) &&
-      preferredTime.trim().length > 0 &&
-      concernLength >= 5 &&
-      concernLength <= 2000 &&
-      notesLength <= 1000
-    );
-  }, [
-    consultationType,
-    preferredDate,
-    preferredTime,
-    concernLength,
-    notesLength,
-  ]);
+  const notesLength = notes.trim().length;
 
   const toggleGoal = (goal: string) => {
     if (saving) {
@@ -160,7 +214,7 @@ export default function ConsultationBookScreen() {
     });
   };
 
-  const handleDateChange = (_event: any, selectedDate?: Date) => {
+  const handleAndroidDateChange = (_event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
 
     if (!selectedDate || saving) {
@@ -169,8 +223,38 @@ export default function ConsultationBookScreen() {
 
     const selected = new Date(selectedDate);
     selected.setHours(0, 0, 0, 0);
-
     setPreferredDate(selected);
+    setSubmitError("");
+  };
+
+  const openDatePicker = () => {
+    if (saving) {
+      return;
+    }
+
+    setIosDateDraft(new Date(preferredDate));
+    setShowDatePicker(true);
+  };
+
+  const cancelIosDate = () => {
+    if (saving) {
+      return;
+    }
+
+    setShowDatePicker(false);
+    setIosDateDraft(new Date(preferredDate));
+  };
+
+  const confirmIosDate = () => {
+    if (saving) {
+      return;
+    }
+
+    const selected = new Date(iosDateDraft);
+    selected.setHours(0, 0, 0, 0);
+    setPreferredDate(selected);
+    setShowDatePicker(false);
+    setSubmitError("");
   };
 
   const handleSubmit = async () => {
@@ -178,35 +262,28 @@ export default function ConsultationBookScreen() {
       return;
     }
 
+    setHasAttemptedSubmit(true);
+    setSubmitError("");
+
     if (concernLength < 5) {
-      Alert.alert(
-        "Tell us a little more",
+      setSubmitError(
         "Please describe your main concern in at least 5 characters.",
       );
       return;
     }
 
     if (concernLength > 2000) {
-      Alert.alert(
-        "Concern is too long",
-        "Please keep your concern within 2000 characters.",
-      );
+      setSubmitError("Please keep your main concern within 2000 characters.");
       return;
     }
 
     if (!preferredTime) {
-      Alert.alert(
-        "Choose a preferred time",
-        "Please select a preferred consultation time.",
-      );
+      setSubmitError("Please select a preferred consultation time.");
       return;
     }
 
     if (notesLength > 1000) {
-      Alert.alert(
-        "Notes are too long",
-        "Please keep your notes within 1000 characters.",
-      );
+      setSubmitError("Please keep your notes within 1000 characters.");
       return;
     }
 
@@ -219,14 +296,13 @@ export default function ConsultationBookScreen() {
       notes: notes.trim() || undefined,
     };
 
+    Keyboard.dismiss();
+
     try {
-      // Start loading
       setSaving(true);
 
-      // 1. Submit to backend / MongoDB
       const createdConsultation = await createConsultation(payload);
 
-      // 2. Make sure backend returned the created consultation
       if (!createdConsultation?._id) {
         throw new Error(
           "Consultation was submitted, but no consultation ID was returned.",
@@ -235,27 +311,21 @@ export default function ConsultationBookScreen() {
 
       const consultationId = createdConsultation._id;
 
-      // 3. Clear the form ONLY after successful database submission
       setConsultationType("online");
       setPreferredDate(getTomorrow());
+      setIosDateDraft(getTomorrow());
       setPreferredTime("");
-
       setShowDatePicker(false);
       setShowTimeOptions(false);
-
       setConcern("");
       setNotes("");
       setSelectedGoals([]);
-
-      // 4. IMPORTANT:
-      // Stop the loader BEFORE navigating.
+      setHasAttemptedSubmit(false);
+      setSubmitError("");
       setSaving(false);
 
-      // 5. Give React one moment to render the completed state
-      // before changing screens.
       await new Promise((resolve) => setTimeout(resolve, 150));
 
-      // 6. Navigate to consultation dashboard
       router.replace({
         pathname: "/(main)/consultation" as any,
         params: {
@@ -264,11 +334,7 @@ export default function ConsultationBookScreen() {
       });
     } catch (error: any) {
       console.log("Create consultation error:", error);
-
-      Alert.alert("Unable to request consultation", getErrorMessage(error));
-
-      // Only stop loader when request fails.
-      // Keep all entered data so the user can retry.
+      setSubmitError(getErrorMessage(error));
       setSaving(false);
     }
   };
@@ -281,13 +347,15 @@ export default function ConsultationBookScreen() {
     >
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {/* Header */}
+
         <View
           className="flex-row items-center px-5 pb-4 pt-3"
           style={{
             borderBottomWidth: 1,
+
             borderBottomColor: COLORS.border,
           }}
         >
@@ -301,6 +369,7 @@ export default function ConsultationBookScreen() {
             className="h-10 w-10 items-center justify-center rounded-full"
             style={{
               backgroundColor: COLORS.surface,
+
               opacity: saving ? 0.5 : 1,
             }}
           >
@@ -333,22 +402,31 @@ export default function ConsultationBookScreen() {
 
         <ScrollView
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="none"
+          scrollEnabled={!saving}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 20,
             paddingTop: 20,
-            paddingBottom: 45,
+            paddingBottom:
+              Platform.OS === "android"
+                ? Math.max(keyboardHeight + 40, 72)
+                : 72,
           }}
         >
           {/* Intro */}
+
           <View
-            className="mb-6 rounded-[22px] p-5"
-            style={{ backgroundColor: COLORS.primarySoft }}
+            className="mb-6 rounded-[20px] border p-4"
+            style={{
+              backgroundColor: COLORS.surface,
+              borderColor: COLORS.border,
+            }}
           >
             <View className="flex-row items-start">
               <View
                 className="h-10 w-10 items-center justify-center rounded-full"
-                style={{ backgroundColor: COLORS.surface }}
+                style={{ backgroundColor: COLORS.primarySoft }}
               >
                 <Ionicons
                   name="heart-outline"
@@ -377,6 +455,7 @@ export default function ConsultationBookScreen() {
           </View>
 
           {/* Consultation type */}
+
           <SectionTitle
             title="Consultation type"
             subtitle="Choose how you would like to connect."
@@ -411,6 +490,7 @@ export default function ConsultationBookScreen() {
           </View>
 
           {/* Date */}
+
           <SectionTitle
             title="Preferred date"
             subtitle="Choose a day that works for you."
@@ -418,11 +498,13 @@ export default function ConsultationBookScreen() {
 
           <Pressable
             disabled={saving}
-            onPress={() => setShowDatePicker(true)}
+            onPress={openDatePicker}
             className="mb-6 flex-row items-center rounded-[18px] border p-4"
             style={{
               backgroundColor: COLORS.surface,
+
               borderColor: COLORS.border,
+
               opacity: saving ? 0.55 : 1,
             }}
           >
@@ -453,19 +535,115 @@ export default function ConsultationBookScreen() {
             <Ionicons name="chevron-forward" size={19} color={COLORS.muted} />
           </Pressable>
 
-          {showDatePicker && (
-            <View className="mb-6">
-              <DateTimePicker
-                value={preferredDate}
-                mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                minimumDate={getTomorrow()}
-                onChange={handleDateChange}
-              />
+          {Platform.OS === "android" && showDatePicker ? (
+            <DateTimePicker
+              value={preferredDate}
+              mode="date"
+              display="default"
+              minimumDate={getTomorrow()}
+              onChange={handleAndroidDateChange}
+            />
+          ) : null}
+
+          <Modal
+            visible={Platform.OS === "ios" && showDatePicker}
+            transparent
+            animationType="slide"
+            onRequestClose={cancelIosDate}
+          >
+            <View
+              className="flex-1 justify-end"
+              style={{ backgroundColor: "rgba(38, 49, 40, 0.30)" }}
+            >
+              <View
+                className="rounded-t-[28px] px-5 pb-8 pt-4"
+                style={{ backgroundColor: COLORS.surface }}
+              >
+                <View className="mb-4 flex-row items-center justify-between">
+                  <Pressable
+                    disabled={saving}
+                    onPress={cancelIosDate}
+                    className="h-10 min-w-[64px] items-center justify-center"
+                  >
+                    <Text
+                      className="text-[13px] font-semibold"
+                      style={{ color: COLORS.muted }}
+                    >
+                      Cancel
+                    </Text>
+                  </Pressable>
+
+                  <View className="items-center px-3">
+                    <Text
+                      className="text-[16px] font-bold"
+                      style={{ color: COLORS.text }}
+                    >
+                      Choose date
+                    </Text>
+                    <Text
+                      className="mt-1 text-[10px]"
+                      style={{ color: COLORS.muted }}
+                    >
+                      Select your preferred consultation day
+                    </Text>
+                  </View>
+
+                  <Pressable
+                    disabled={saving}
+                    onPress={confirmIosDate}
+                    className="h-10 min-w-[64px] items-center justify-center"
+                  >
+                    <Text
+                      className="text-[13px] font-bold"
+                      style={{ color: COLORS.primary }}
+                    >
+                      Done
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <View
+                  className="mb-2 rounded-[16px] border px-4 py-3"
+                  style={{
+                    backgroundColor: COLORS.primarySoft,
+                    borderColor: "#D7E3D3",
+                  }}
+                >
+                  <Text
+                    className="text-[9px] font-semibold uppercase tracking-[1px]"
+                    style={{ color: COLORS.muted }}
+                  >
+                    Selected date
+                  </Text>
+                  <Text
+                    className="mt-1 text-[16px] font-bold"
+                    style={{ color: COLORS.primaryDark }}
+                  >
+                    {formatDisplayDate(iosDateDraft)}
+                  </Text>
+                </View>
+
+                <DateTimePicker
+                  value={iosDateDraft}
+                  mode="date"
+                  display="spinner"
+                  themeVariant="light"
+                  minimumDate={getTomorrow()}
+                  onChange={(_event, selectedDate) => {
+                    if (selectedDate && !saving) {
+                      const next = new Date(selectedDate);
+                      next.setHours(0, 0, 0, 0);
+                      setIosDateDraft(next);
+                    }
+                  }}
+                  style={{ height: 190, width: "100%" }}
+                />
+              </View>
             </View>
-          )}
+          </Modal>
 
           {/* Time */}
+
           <SectionTitle
             title="Preferred time"
             subtitle="Choose an available-looking time preference."
@@ -477,7 +655,9 @@ export default function ConsultationBookScreen() {
             className="mb-3 flex-row items-center rounded-[18px] border p-4"
             style={{
               backgroundColor: COLORS.surface,
+
               borderColor: COLORS.border,
+
               opacity: saving ? 0.55 : 1,
             }}
           >
@@ -515,6 +695,7 @@ export default function ConsultationBookScreen() {
               className="mb-6 rounded-[18px] border p-3"
               style={{
                 backgroundColor: COLORS.surface,
+
                 borderColor: COLORS.border,
               }}
             >
@@ -532,6 +713,7 @@ export default function ConsultationBookScreen() {
                         }
 
                         setPreferredTime(time);
+
                         setShowTimeOptions(false);
                       }}
                       className="mb-2 mr-2 rounded-full border px-4 py-2.5"
@@ -539,6 +721,7 @@ export default function ConsultationBookScreen() {
                         backgroundColor: selected
                           ? COLORS.primary
                           : COLORS.background,
+
                         borderColor: selected ? COLORS.primary : COLORS.border,
                       }}
                     >
@@ -560,6 +743,7 @@ export default function ConsultationBookScreen() {
           {!showTimeOptions && <View className="mb-3" />}
 
           {/* Main concern */}
+
           <SectionTitle
             title="Main concern"
             subtitle="Tell us what you would like guidance with."
@@ -570,12 +754,16 @@ export default function ConsultationBookScreen() {
             className="mb-6 rounded-[18px] border p-4"
             style={{
               backgroundColor: COLORS.surface,
+
               borderColor: COLORS.border,
             }}
           >
             <TextInput
               value={concern}
-              onChangeText={setConcern}
+              onChangeText={(value) => {
+                setConcern(value);
+                if (submitError) setSubmitError("");
+              }}
               editable={!saving}
               multiline
               maxLength={2000}
@@ -600,7 +788,30 @@ export default function ConsultationBookScreen() {
             </View>
           </View>
 
+          {hasAttemptedSubmit && concernLength < 5 ? (
+            <View
+              className="mb-5 -mt-3 flex-row items-start rounded-[14px] border px-3.5 py-3"
+              style={{
+                backgroundColor: "#FBF0ED",
+                borderColor: "#E8CEC8",
+              }}
+            >
+              <Ionicons
+                name="alert-circle-outline"
+                size={15}
+                color={COLORS.danger}
+              />
+              <Text
+                className="ml-2 flex-1 text-[10px] leading-4"
+                style={{ color: COLORS.danger }}
+              >
+                Please add at least 5 characters describing your main concern.
+              </Text>
+            </View>
+          ) : null}
+
           {/* Goals */}
+
           <SectionTitle
             title="Wellness goals"
             subtitle="Select anything you would like to discuss."
@@ -620,7 +831,9 @@ export default function ConsultationBookScreen() {
                     backgroundColor: selected
                       ? COLORS.primarySoft
                       : COLORS.surface,
+
                     borderColor: selected ? COLORS.primary : COLORS.border,
+
                     opacity: saving ? 0.55 : 1,
                   }}
                 >
@@ -650,6 +863,7 @@ export default function ConsultationBookScreen() {
           </View>
 
           {/* Notes */}
+
           <SectionTitle
             title="Additional notes"
             subtitle="Anything else you would like us to know? Optional."
@@ -659,12 +873,16 @@ export default function ConsultationBookScreen() {
             className="mb-6 rounded-[18px] border p-4"
             style={{
               backgroundColor: COLORS.surface,
+
               borderColor: COLORS.border,
             }}
           >
             <TextInput
               value={notes}
-              onChangeText={setNotes}
+              onChangeText={(value) => {
+                setNotes(value);
+                if (submitError) setSubmitError("");
+              }}
               editable={!saving}
               multiline
               maxLength={1000}
@@ -684,14 +902,56 @@ export default function ConsultationBookScreen() {
             </View>
           </View>
 
+          {submitError ? (
+            <View
+              className="mb-4 flex-row items-start rounded-[16px] border px-3.5 py-3"
+              style={{
+                backgroundColor: "#FBF0ED",
+                borderColor: "#E8CEC8",
+              }}
+            >
+              <View
+                className="h-7 w-7 items-center justify-center rounded-full"
+                style={{ backgroundColor: "#F4DDD8" }}
+              >
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={16}
+                  color={COLORS.danger}
+                />
+              </View>
+
+              <View className="ml-2.5 flex-1">
+                <Text
+                  className="text-[11px] font-bold"
+                  style={{ color: COLORS.text }}
+                >
+                  We couldn't send the request
+                </Text>
+                <Text
+                  className="mt-1 text-[10px] leading-4"
+                  style={{ color: COLORS.danger }}
+                >
+                  {submitError}
+                </Text>
+              </View>
+
+              {!saving ? (
+                <Pressable onPress={() => setSubmitError("")} hitSlop={8}>
+                  <Ionicons name="close" size={16} color={COLORS.danger} />
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
+
           {/* Request button */}
+
           <Pressable
-            disabled={saving || !isValid}
+            disabled={saving}
             onPress={handleSubmit}
             className="mt-1 h-[56px] items-center justify-center rounded-[18px]"
             style={{
-              backgroundColor:
-                saving || !isValid ? COLORS.disabled : COLORS.primary,
+              backgroundColor: saving ? COLORS.disabled : COLORS.primary,
             }}
           >
             {saving ? (
@@ -730,6 +990,7 @@ export default function ConsultationBookScreen() {
       </KeyboardAvoidingView>
 
       {/* Full-screen submission loader */}
+
       {saving && (
         <View
           className="absolute inset-0 items-center justify-center px-6"
@@ -779,11 +1040,15 @@ export default function ConsultationBookScreen() {
 
 function SectionTitle({
   title,
+
   subtitle,
+
   required = false,
 }: {
   title: string;
+
   subtitle: string;
+
   required?: boolean;
 }) {
   return (
@@ -812,17 +1077,27 @@ function SectionTitle({
 
 function TypeCard({
   icon,
+
   title,
+
   description,
+
   selected,
+
   onPress,
+
   disabled = false,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
+
   title: string;
+
   description: string;
+
   selected: boolean;
+
   onPress: () => void;
+
   disabled?: boolean;
 }) {
   return (
@@ -832,7 +1107,9 @@ function TypeCard({
       className="flex-1 rounded-[20px] border p-4"
       style={({ pressed }) => ({
         backgroundColor: selected ? COLORS.primarySoft : COLORS.surface,
+
         borderColor: selected ? COLORS.primary : COLORS.border,
+
         opacity: disabled ? 0.55 : pressed ? 0.82 : 1,
       })}
     >

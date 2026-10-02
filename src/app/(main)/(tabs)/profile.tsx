@@ -22,10 +22,10 @@ import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
-import { getProfile } from "../../services/profile.service";
-import { UserProfile } from "../../types/profile";
+import { getProfile } from "../../../services/profile.service";
+import { UserProfile } from "../../../types/profile";
 
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../../context/AuthContext";
 
 const COLORS = {
   background: "#F5F7F4",

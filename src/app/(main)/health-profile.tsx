@@ -19,9 +19,9 @@ import { HealthProfile } from "@/types/healthProfile";
 ========================================================================== */
 
 const COLORS = {
-  background: "#F7F5EF",
+  background: "#F6F7F4",
   surface: "#FFFFFF",
-  surfaceSoft: "#FAFBF8",
+  surfaceSoft: "#F8FAF7",
 
   text: "#263128",
   textSecondary: "#59635A",
@@ -34,8 +34,8 @@ const COLORS = {
   lightGreen: "#EAF1E7",
   lighterGreen: "#F3F7F1",
 
-  border: "#E5E2DA",
-  borderSoft: "#EFEEE9",
+  border: "#E2E7E1",
+  borderSoft: "#EDF0EB",
 
   danger: "#A65C50",
   dangerBackground: "#F8EEEB",
@@ -114,6 +114,45 @@ function formatId(value: unknown): string {
 }
 
 /* ==========================================================================
+   SCREEN HEADER
+========================================================================== */
+
+function ScreenHeader() {
+  return (
+    <View className="flex-row items-center px-5 pb-4 pt-2">
+      <TouchableOpacity
+        activeOpacity={0.78}
+        onPress={() => router.back()}
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
+        className="h-10 w-10 items-center justify-center rounded-full border border-[#E2E7E1] bg-white"
+      >
+        <Ionicons name="arrow-back" size={18} color={COLORS.text} />
+      </TouchableOpacity>
+
+      <View className="ml-3 flex-1">
+        <Text className="text-[16px] font-bold text-[#263128]">
+          Health Profile
+        </Text>
+        <Text className="mt-0.5 text-[8px] font-medium uppercase tracking-[1px] text-[#8A9188]">
+          Your health information
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        activeOpacity={0.78}
+        onPress={() => router.push("/(main)/health-profile-edit" as any)}
+        accessibilityRole="button"
+        accessibilityLabel="Edit health profile"
+        className="h-10 w-10 items-center justify-center rounded-full bg-[#EAF1E7]"
+      >
+        <Ionicons name="create-outline" size={17} color={COLORS.green} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+/* ==========================================================================
    HEADER
 ========================================================================== */
 
@@ -142,7 +181,7 @@ function HealthProfileHeader({
             Health Profile
           </Text>
 
-          <Text className="mt-2 text-[11px] leading-[17px] text-[#777C74]">
+          <Text className="mt-2 text-[11px] leading-[17px] text-[#68736B]">
             A complete view of your personal health, lifestyle, wellbeing and
             wellness preferences.
           </Text>
@@ -197,16 +236,14 @@ function ProfileSection({
   children: React.ReactNode;
 }) {
   return (
-    <View className="mb-4 overflow-hidden rounded-[16px] border border-[#E5E2DA] bg-white">
-      <View className="flex-row items-center border-b border-[#EFEEE9] px-4 py-4">
-        <View className="h-9 w-9 items-center justify-center rounded-[11px] bg-[#EDF4EA]">
+    <View className="mb-4 overflow-hidden rounded-[20px] border border-[#E2E7E1] bg-white">
+      <View className="flex-row items-center border-b border-[#EDF0EB] px-4 py-4">
+        <View className="h-10 w-10 items-center justify-center rounded-[12px] bg-[#EDF4EA]">
           <Ionicons name={icon} size={17} color={COLORS.green} />
         </View>
 
         <View className="ml-3 flex-1">
-          <Text className="font-serif text-[15px] font-bold text-[#263128]">
-            {title}
-          </Text>
+          <Text className="text-[15px] font-bold text-[#263128]">{title}</Text>
 
           {subtitle ? (
             <Text className="mt-0.5 text-[8px] leading-[13px] text-[#92978F]">
@@ -242,12 +279,12 @@ function ProfileRow({
         last ? "" : "border-b border-[#F0EEE8]"
       }`}
     >
-      <Text className="flex-1 pr-5 text-[9px] font-medium uppercase tracking-[0.45px] text-[#999D95]">
+      <Text className="flex-1 pr-5 text-[9px] font-semibold uppercase tracking-[0.5px] text-[#8A9289]">
         {label}
       </Text>
 
       <Text
-        className={`max-w-[61%] text-right text-[10px] font-semibold leading-[15px] ${
+        className={`max-w-[61%] text-right text-[11px] font-semibold leading-[16px] ${
           mono ? "font-mono text-[9px] text-[#59635A]" : "text-[#344038]"
         }`}
       >
@@ -332,12 +369,12 @@ function ProfileEmpty({ onRetry }: { onRetry: () => void }) {
       edges={["top"]}
       className="flex-1 items-center justify-center bg-[#F7F5EF] px-[18px]"
     >
-      <View className="w-full rounded-[18px] border border-[#E5E2DA] bg-white px-6 py-8">
+      <View className="w-full rounded-[20px] border border-[#E2E7E1] bg-white px-6 py-8">
         <View className="mx-auto h-14 w-14 items-center justify-center rounded-full bg-[#EDF4EA]">
           <Ionicons name="person-outline" size={24} color={COLORS.green} />
         </View>
 
-        <Text className="mt-4 text-center font-serif text-[20px] font-bold text-[#263128]">
+        <Text className="mt-4 text-center text-[20px] font-bold text-[#263128]">
           Health profile not found
         </Text>
 
@@ -373,7 +410,7 @@ function ProfileError({
       edges={["top"]}
       className="flex-1 items-center justify-center bg-[#F7F5EF] px-[18px]"
     >
-      <View className="w-full rounded-[18px] border border-[#E5E2DA] bg-white px-6 py-8">
+      <View className="w-full rounded-[20px] border border-[#E2E7E1] bg-white px-6 py-8">
         <View className="mx-auto h-14 w-14 items-center justify-center rounded-full bg-[#F8EEEB]">
           <Ionicons
             name="alert-circle-outline"
@@ -382,7 +419,7 @@ function ProfileError({
           />
         </View>
 
-        <Text className="mt-4 text-center font-serif text-[20px] font-bold text-[#263128]">
+        <Text className="mt-4 text-center text-[20px] font-bold text-[#263128]">
           Couldn't load your profile
         </Text>
 
@@ -408,15 +445,20 @@ function ProfileError({
 
 function ProfileLoading() {
   return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-[#F7F5EF]">
-      <View className="px-[18px] pt-5">
-        <View className="h-2.5 w-24 rounded-full bg-[#E6E3DB]" />
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      className="flex-1"
+      style={{ backgroundColor: COLORS.background }}
+    >
+      <ScreenHeader />
+      <View className="px-[18px] pt-2">
+        <View className="h-2.5 w-24 rounded-full bg-[#E9EDE8]" />
 
-        <View className="mt-3 h-9 w-48 rounded-[8px] bg-[#E6E3DB]" />
+        <View className="mt-3 h-9 w-48 rounded-[8px] bg-[#E9EDE8]" />
 
-        <View className="mt-2 h-3 w-72 rounded-full bg-[#E6E3DB]" />
+        <View className="mt-2 h-3 w-72 rounded-full bg-[#E9EDE8]" />
 
-        <View className="mt-5 h-[6px] rounded-full bg-[#E6E3DB]" />
+        <View className="mt-5 h-[6px] rounded-full bg-[#E9EDE8]" />
 
         {Array.from({ length: 7 }).map((_, index) => (
           <View
@@ -511,7 +553,13 @@ export default function HealthProfileScreen() {
   const onboardingCompleted = profile.onboarding?.completed === true;
 
   return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-[#F7F5EF]">
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      className="flex-1"
+      style={{ backgroundColor: COLORS.background }}
+    >
+      <ScreenHeader />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -523,8 +571,8 @@ export default function HealthProfileScreen() {
         }
         contentContainerStyle={{
           paddingHorizontal: 18,
-          paddingTop: 16,
-          paddingBottom: 50,
+          paddingTop: 4,
+          paddingBottom: 42,
         }}
       >
         {/* ================================================================== */}
@@ -541,23 +589,34 @@ export default function HealthProfileScreen() {
         {/* ================================================================== */}
 
         <TouchableOpacity
-          activeOpacity={0.86}
+          activeOpacity={0.84}
           onPress={() => router.push("/(main)/health-profile-edit" as any)}
-          className="mb-5 flex-row items-center justify-center rounded-[12px] bg-[#4D6A50] py-3.5"
+          className="mb-5 flex-row items-center rounded-[16px] border border-[#DCE7D8] bg-[#EDF4EA] px-4 py-3.5"
         >
-          <Ionicons name="create-outline" size={15} color="#FFFFFF" />
+          <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
+            <Ionicons name="create-outline" size={15} color={COLORS.green} />
+          </View>
 
-          <Text className="ml-2 text-[10px] font-bold text-white">
-            Edit health profile
-          </Text>
+          <View className="ml-3 flex-1">
+            <Text className="text-[10px] font-bold text-[#304B36]">
+              Keep your profile up to date
+            </Text>
+            <Text className="mt-0.5 text-[8px] leading-[12px] text-[#718071]">
+              Update your health and wellness information anytime.
+            </Text>
+          </View>
 
-          <Ionicons
-            name="arrow-forward"
-            size={13}
-            color="#DCE8DD"
-            style={{ marginLeft: 7 }}
-          />
+          <Ionicons name="chevron-forward" size={16} color={COLORS.green} />
         </TouchableOpacity>
+
+        <View className="mb-4 px-1">
+          <Text className="text-[9px] font-semibold uppercase tracking-[1.2px] text-[#8A9188]">
+            Profile overview
+          </Text>
+          <Text className="mt-1 text-[11px] leading-[16px] text-[#68736B]">
+            A calm, at-a-glance view of the information you have shared.
+          </Text>
+        </View>
 
         {/* ================================================================== */}
         {/* PERSONAL INFORMATION                                              */}
@@ -931,7 +990,7 @@ export default function HealthProfileScreen() {
         {/* FOOTER                                                            */}
         {/* ================================================================== */}
 
-        <View className="items-center px-8 pb-3 pt-3">
+        <View className="items-center px-8 pb-5 pt-4">
           <View className="h-9 w-9 items-center justify-center rounded-full bg-[#EDF4EA]">
             <Ionicons
               name="shield-checkmark-outline"

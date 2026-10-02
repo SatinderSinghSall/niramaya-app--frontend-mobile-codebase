@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
+  Modal,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -11,9 +14,11 @@ import {
   View,
 } from "react-native";
 
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
 import { createGoal } from "@/services/goal.service";
@@ -35,6 +40,8 @@ type FieldErrors = {
   targetDate: string;
 };
 
+type PickerKind = "start" | "target" | null;
+
 /* ==========================================================================
    COLORS
 ========================================================================== */
@@ -42,30 +49,24 @@ type FieldErrors = {
 const COLORS = {
   background: "#F7F3EA",
   surface: "#FFFFFF",
+  softSurface: "#FBFAF7",
 
-  text: "#263128",
-  muted: "#777C74",
-  softMuted: "#A0A29A",
+  text: "#2C352D",
+  muted: "#777D75",
+  softMuted: "#A1A49C",
 
   green: "#4D6A50",
-  darkGreen: "#304B36",
+  greenDark: "#38513C",
+  greenSoft: "#EAF1E7",
+  greenWash: "#F1F5EF",
 
-  lightGreen: "#E7EFE3",
-  lighterGreen: "#F0F5ED",
+  border: "#E2DDD3",
+  inputBorder: "#D9D4CA",
 
-  border: "#E3DDD2",
-  inputBorder: "#DDD7CC",
-
-  red: "#C64D4D",
-  redBackground: "#FBEEEE",
-
-  blue: "#52718B",
-  blueBackground: "#EDF3F6",
+  red: "#C65353",
+  redBackground: "#FBEFEE",
+  redBorder: "#E7CACA",
 };
-
-/* ==========================================================================
-   EMPTY ERRORS
-========================================================================== */
 
 const EMPTY_ERRORS: FieldErrors = {
   title: "",
@@ -90,8 +91,12 @@ function formatDate(date: Date) {
   });
 }
 
-function formatISODate(date: Date) {
-  return date.toISOString();
+function getErrorMessage(error: any) {
+  return (
+    error?.response?.data?.message ||
+    error?.message ||
+    "Something went wrong while creating your goal. Please try again."
+  );
 }
 
 /* ==========================================================================
@@ -99,25 +104,27 @@ function formatISODate(date: Date) {
 ========================================================================== */
 
 function SectionHeader({
-  eyebrow,
+  number,
   title,
   subtitle,
 }: {
-  eyebrow: string;
+  number: string;
   title: string;
   subtitle: string;
 }) {
   return (
     <View className="mb-4">
-      <Text className="text-[9px] font-semibold uppercase tracking-[1.5px] text-[#718071]">
-        {eyebrow}
-      </Text>
+      <View className="mb-1.5 flex-row items-center">
+        <View className="h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#E9EFE6] px-1.5">
+          <Text className="text-[8px] font-bold text-[#5D735F]">{number}</Text>
+        </View>
 
-      <Text className="mt-1 font-serif text-[19px] font-bold text-[#263128]">
-        {title}
-      </Text>
+        <Text className="ml-2.5 font-serif text-[19px] font-bold text-[#2C352D]">
+          {title}
+        </Text>
+      </View>
 
-      <Text className="mt-1 text-[10px] leading-[15px] text-[#858980]">
+      <Text className="ml-[34px] text-[10px] leading-[15px] text-[#858980]">
         {subtitle}
       </Text>
     </View>
@@ -125,7 +132,7 @@ function SectionHeader({
 }
 
 /* ==========================================================================
-   FORM INPUT
+   FORM FIELD
 ========================================================================== */
 
 function FormInput({
@@ -133,7 +140,6 @@ function FormInput({
   placeholder,
   value,
   onChangeText,
-  icon,
   error,
   disabled,
   keyboardType = "default",
@@ -145,7 +151,6 @@ function FormInput({
   placeholder: string;
   value: string;
   onChangeText: (value: string) => void;
-  icon: keyof typeof Ionicons.glyphMap;
   error?: string;
   disabled?: boolean;
   keyboardType?: "default" | "numeric" | "decimal-pad";
@@ -158,50 +163,35 @@ function FormInput({
       <View className="mb-2 flex-row items-center justify-between">
         <Text className="text-[10px] font-semibold text-[#4F554E]">
           {label}
-
-          {required ? <Text className="text-[#C64D4D]"> *</Text> : null}
+          {required ? <Text className="text-[#C65353]"> *</Text> : null}
         </Text>
 
         {hint ? (
-          <Text className="text-[8px] text-[#A0A29A]">{hint}</Text>
+          <Text className="text-[8px] text-[#A0A39B]">{hint}</Text>
         ) : null}
       </View>
 
-      <View
-        className={`overflow-hidden rounded-[5px] border bg-white ${
-          error ? "border-[#D88B8B]" : "border-[#DDD7CC]"
-        } ${disabled ? "opacity-50" : ""}`}
-      >
-        <View className="flex-row items-start">
-          <View className="w-10 items-center pt-[15px]">
-            <Ionicons
-              name={icon}
-              size={16}
-              color={error ? COLORS.red : COLORS.green}
-            />
-          </View>
-
-          <TextInput
-            editable={!disabled}
-            value={value}
-            onChangeText={onChangeText}
-            placeholder={placeholder}
-            placeholderTextColor="#AAA99F"
-            keyboardType={keyboardType}
-            multiline={multiline}
-            textAlignVertical={multiline ? "top" : "center"}
-            className={`flex-1 pr-4 text-[12px] text-[#263128] ${
-              multiline ? "min-h-[92px] py-3.5" : "h-[47px]"
-            }`}
-          />
-        </View>
-      </View>
+      <TextInput
+        editable={!disabled}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#AAA99F"
+        keyboardType={keyboardType}
+        multiline={multiline}
+        textAlignVertical={multiline ? "top" : "center"}
+        selectionColor={COLORS.green}
+        className={`rounded-[7px] border bg-white px-3.5 text-[12px] text-[#2C352D] ${
+          error ? "border-[#D88B8B]" : "border-[#D9D4CA]"
+        } ${multiline ? "min-h-[92px] py-3.5" : "h-[48px]"} ${
+          disabled ? "bg-[#F4F2ED] text-[#9B9E97]" : ""
+        }`}
+      />
 
       {error ? (
         <View className="mt-1.5 flex-row items-center">
           <Ionicons name="alert-circle-outline" size={12} color={COLORS.red} />
-
-          <Text className="ml-1 text-[9px] font-medium text-[#C64D4D]">
+          <Text className="ml-1 text-[9px] font-medium text-[#C65353]">
             {error}
           </Text>
         </View>
@@ -219,7 +209,6 @@ function DateField({
   subtitle,
   date,
   placeholder,
-  icon,
   error,
   disabled,
   required,
@@ -229,56 +218,51 @@ function DateField({
   subtitle: string;
   date?: Date;
   placeholder: string;
-  icon: keyof typeof Ionicons.glyphMap;
   error?: string;
   disabled?: boolean;
   required?: boolean;
   onPress: () => void;
 }) {
   return (
-    <View className="mb-4">
+    <View className="mb-4 flex-1">
       <Text className="mb-2 text-[10px] font-semibold text-[#4F554E]">
         {label}
-
-        {required ? <Text className="text-[#C64D4D]"> *</Text> : null}
+        {required ? <Text className="text-[#C65353]"> *</Text> : null}
       </Text>
 
       <TouchableOpacity
         disabled={disabled}
         activeOpacity={0.8}
         onPress={onPress}
-        className={`rounded-[5px] border bg-white px-3.5 py-3 ${
-          error ? "border-[#D88B8B]" : "border-[#DDD7CC]"
-        } ${disabled ? "opacity-50" : ""}`}
+        className={`rounded-[7px] border bg-white px-3.5 py-3 ${
+          error ? "border-[#D88B8B]" : "border-[#D9D4CA]"
+        } ${disabled ? "bg-[#F4F2ED]" : ""}`}
       >
         <View className="flex-row items-center">
-          <View className="h-9 w-9 items-center justify-center rounded-[4px] bg-[#F0F4ED]">
-            <Ionicons name={icon} size={16} color={COLORS.green} />
+          <View className="h-8 w-8 items-center justify-center rounded-full bg-[#EFF3EC]">
+            <Ionicons name="calendar-outline" size={15} color={COLORS.green} />
           </View>
 
-          <View className="ml-3 flex-1">
-            <Text className="text-[8px] text-[#9A9C95]">{subtitle}</Text>
+          <View className="ml-2.5 flex-1">
+            <Text className="text-[8px] text-[#9A9D96]">{subtitle}</Text>
 
             <Text
-              className={`mt-0.5 text-[12px] font-semibold ${
-                date ? "text-[#263128]" : "text-[#AAA99F]"
+              className={`mt-0.5 text-[11px] font-semibold ${
+                date ? "text-[#2C352D]" : "text-[#AAA99F]"
               }`}
             >
               {date ? formatDate(date) : placeholder}
             </Text>
           </View>
 
-          <Ionicons name="chevron-forward" size={15} color="#9A9C95" />
+          <Ionicons name="chevron-forward" size={14} color="#9A9D96" />
         </View>
       </TouchableOpacity>
 
       {error ? (
         <View className="mt-1.5 flex-row items-center">
           <Ionicons name="alert-circle-outline" size={12} color={COLORS.red} />
-
-          <Text className="ml-1 text-[9px] font-medium text-[#C64D4D]">
-            {error}
-          </Text>
+          <Text className="ml-1 text-[9px] text-[#C65353]">{error}</Text>
         </View>
       ) : null}
     </View>
@@ -286,7 +270,7 @@ function DateField({
 }
 
 /* ==========================================================================
-   CATEGORY
+   CATEGORY BUTTON
 ========================================================================== */
 
 function CategoryButton({
@@ -305,18 +289,12 @@ function CategoryButton({
       disabled={disabled}
       activeOpacity={0.8}
       onPress={onPress}
-      className={`mb-2.5 mr-2 flex-row items-center rounded-full border px-3.5 py-2.5 ${
+      className={`mb-2 mr-2 rounded-full border px-3.5 py-2.5 ${
         selected ? "border-[#4D6A50] bg-[#4D6A50]" : "border-[#DDD7CC] bg-white"
       } ${disabled ? "opacity-50" : ""}`}
     >
-      <Ionicons
-        name={selected ? "checkmark" : "leaf-outline"}
-        size={13}
-        color={selected ? "#FFFFFF" : "#667066"}
-      />
-
       <Text
-        className={`ml-1.5 text-[9px] font-semibold ${
+        className={`text-[9px] font-semibold ${
           selected ? "text-white" : "text-[#596059]"
         }`}
       >
@@ -327,39 +305,113 @@ function CategoryButton({
 }
 
 /* ==========================================================================
+   DATE PICKER SHEET
+========================================================================== */
+
+function DatePickerSheet({
+  visible,
+  title,
+  value,
+  minimumDate,
+  onCancel,
+  onDone,
+  onChange,
+}: {
+  visible: boolean;
+  title: string;
+  value: Date;
+  minimumDate?: Date;
+  onCancel: () => void;
+  onDone: () => void;
+  onChange: (date: Date) => void;
+}) {
+  if (Platform.OS !== "ios") {
+    return null;
+  }
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onCancel}
+    >
+      <View className="flex-1 justify-end bg-black/25">
+        <View className="rounded-t-[22px] bg-white px-5 pb-8 pt-4">
+          <View className="mb-4 flex-row items-center justify-between">
+            <TouchableOpacity onPress={onCancel} activeOpacity={0.7}>
+              <Text className="text-[11px] font-semibold text-[#777D75]">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+
+            <View className="items-center">
+              <Text className="text-[9px] uppercase tracking-[1.2px] text-[#8C9189]">
+                Choose date
+              </Text>
+              <Text className="mt-0.5 font-serif text-[18px] font-bold text-[#2C352D]">
+                {title}
+              </Text>
+            </View>
+
+            <TouchableOpacity onPress={onDone} activeOpacity={0.7}>
+              <Text className="text-[11px] font-bold text-[#4D6A50]">Done</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="overflow-hidden rounded-[12px] bg-[#F8F7F3]">
+            <DateTimePicker
+              value={value}
+              mode="date"
+              display="spinner"
+              themeVariant="light"
+              textColor={COLORS.text}
+              minimumDate={minimumDate}
+              onChange={(_, selectedDate) => {
+                if (selectedDate) {
+                  onChange(selectedDate);
+                }
+              }}
+              style={{
+                width: "100%",
+                height: 210,
+              }}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+/* ==========================================================================
    MAIN SCREEN
 ========================================================================== */
 
 export default function CreateGoalScreen() {
   const [title, setTitle] = useState("");
-
   const [description, setDescription] = useState("");
-
   const [category, setCategory] = useState<GoalCategory>("general_wellbeing");
 
   const [targetValue, setTargetValue] = useState("");
-
   const [targetUnit, setTargetUnit] = useState("");
-
   const [targetDescription, setTargetDescription] = useState("");
 
   const [startDate, setStartDate] = useState<Date | null>(null);
-
   const [targetDate, setTargetDate] = useState<Date | null>(null);
 
-  const [showStartPicker, setShowStartPicker] = useState(false);
-
-  const [showTargetPicker, setShowTargetPicker] = useState(false);
-
   const [errors, setErrors] = useState<FieldErrors>(EMPTY_ERRORS);
-
   const [mainError, setMainError] = useState("");
 
   const [saving, setSaving] = useState(false);
 
-  /* ------------------------------------------------------------------------
-     CLEAR ERROR
-  ------------------------------------------------------------------------ */
+  const [pickerKind, setPickerKind] = useState<PickerKind>(null);
+  const [pickerDate, setPickerDate] = useState(new Date());
+
+  const selectedPickerTitle = useMemo(
+    () => (pickerKind === "start" ? "Start date" : "Target date"),
+    [pickerKind],
+  );
 
   const clearError = (field: keyof FieldErrors) => {
     setErrors((previous) => ({
@@ -372,15 +424,8 @@ export default function CreateGoalScreen() {
     }
   };
 
-  /* ------------------------------------------------------------------------
-     VALIDATION
-  ------------------------------------------------------------------------ */
-
   const validateForm = () => {
-    const nextErrors: FieldErrors = {
-      ...EMPTY_ERRORS,
-    };
-
+    const nextErrors: FieldErrors = { ...EMPTY_ERRORS };
     let valid = true;
 
     if (!title.trim()) {
@@ -393,11 +438,6 @@ export default function CreateGoalScreen() {
 
     if (description.trim() && description.trim().length < 10) {
       nextErrors.description = "Description should be at least 10 characters.";
-      valid = false;
-    }
-
-    if (!category) {
-      nextErrors.category = "Please select a category.";
       valid = false;
     }
 
@@ -442,23 +482,93 @@ export default function CreateGoalScreen() {
     setErrors(nextErrors);
 
     if (!valid) {
-      setMainError(
-        "Please review the highlighted fields before creating your goal.",
-      );
+      setMainError("Please review the highlighted fields.");
     }
 
     return valid;
   };
 
-  /* ------------------------------------------------------------------------
-     CREATE
-  ------------------------------------------------------------------------ */
+  const openDatePicker = (kind: Exclude<PickerKind, null>) => {
+    if (saving) {
+      return;
+    }
+
+    const initialDate =
+      kind === "start"
+        ? (startDate ?? new Date())
+        : (targetDate ?? startDate ?? new Date());
+
+    setPickerKind(kind);
+    setPickerDate(initialDate);
+  };
+
+  const closeDatePicker = () => {
+    setPickerKind(null);
+  };
+
+  const confirmDatePicker = () => {
+    if (!pickerKind) {
+      return;
+    }
+
+    if (pickerKind === "start") {
+      setStartDate(pickerDate);
+      clearError("startDate");
+
+      if (targetDate && targetDate < pickerDate) {
+        setTargetDate(null);
+        setErrors((previous) => ({
+          ...previous,
+          targetDate: "",
+        }));
+      }
+    } else {
+      setTargetDate(pickerDate);
+      clearError("targetDate");
+    }
+
+    setPickerKind(null);
+  };
+
+  const handleAndroidDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
+    if (event.type === "dismissed") {
+      setPickerKind(null);
+      return;
+    }
+
+    if (!selectedDate || !pickerKind) {
+      setPickerKind(null);
+      return;
+    }
+
+    if (pickerKind === "start") {
+      setStartDate(selectedDate);
+      clearError("startDate");
+
+      if (targetDate && targetDate < selectedDate) {
+        setTargetDate(null);
+        setErrors((previous) => ({
+          ...previous,
+          targetDate: "",
+        }));
+      }
+    } else {
+      setTargetDate(selectedDate);
+      clearError("targetDate");
+    }
+
+    setPickerKind(null);
+  };
 
   const handleCreate = async () => {
     if (saving) {
       return;
     }
 
+    Keyboard.dismiss();
     setMainError("");
 
     if (!validateForm()) {
@@ -474,79 +584,38 @@ export default function CreateGoalScreen() {
 
       const goal = await createGoal({
         title: title.trim(),
-
         description: description.trim() || undefined,
-
         category,
-
         target:
           numericTarget !== undefined ||
           targetUnit.trim() ||
           targetDescription.trim()
             ? {
                 value: numericTarget ?? null,
-
                 unit: targetUnit.trim() || null,
-
                 description: targetDescription.trim() || null,
               }
             : undefined,
-
-        startDate: startDate ? formatISODate(startDate) : "",
-
-        targetDate: targetDate ? formatISODate(targetDate) : undefined,
+        startDate: startDate ? startDate.toISOString() : "",
+        targetDate: targetDate ? targetDate.toISOString() : undefined,
       });
 
       router.replace({
         pathname: "/(main)/goals/[id]",
-
         params: {
           id: goal._id,
         },
       });
     } catch (error: any) {
       console.error("Create goal error:", error);
-
-      setMainError(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Something went wrong while creating your goal.",
-      );
+      setMainError(getErrorMessage(error));
     } finally {
       setSaving(false);
     }
   };
 
-  /* ------------------------------------------------------------------------
-     UI
-  ------------------------------------------------------------------------ */
-
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F7F3EA]">
-      {/* ================================================================
-          SUBMIT OVERLAY
-      ================================================================ */}
-
-      {saving ? (
-        <View className="absolute inset-0 z-50 items-center justify-center bg-[#263128]/25">
-          <View className="w-[245px] rounded-[8px] border border-[#E3DDD2] bg-white px-6 py-7">
-            <View className="items-center">
-              <View className="h-12 w-12 items-center justify-center rounded-full bg-[#EEF4EB]">
-                <ActivityIndicator size="small" color={COLORS.green} />
-              </View>
-
-              <Text className="mt-4 font-serif text-[18px] font-bold text-[#263128]">
-                Creating your goal
-              </Text>
-
-              <Text className="mt-1.5 text-center text-[9px] leading-[15px] text-[#777C74]">
-                Saving your intention and preparing your journey.
-              </Text>
-            </View>
-          </View>
-        </View>
-      ) : null}
-
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -554,16 +623,15 @@ export default function CreateGoalScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={
-            Platform.OS === "ios" ? "interactive" : "on-drag"
-          }
+          keyboardDismissMode="none"
+          scrollEnabled={!saving}
           contentContainerStyle={{
-            paddingBottom: 45,
+            paddingBottom: 42,
           }}
         >
-          {/* ==============================================================
+          {/* ================================================================
               HEADER
-          ============================================================== */}
+          ================================================================ */}
 
           <View className="px-[18px] pb-6 pt-3">
             <View className="flex-row items-center">
@@ -579,7 +647,7 @@ export default function CreateGoalScreen() {
               </TouchableOpacity>
 
               <View className="ml-3 flex-1">
-                <Text className="text-[9px] font-semibold uppercase tracking-[1.5px] text-[#718071]">
+                <Text className="text-[9px] font-semibold uppercase tracking-[1.4px] text-[#718071]">
                   Wellness journey
                 </Text>
 
@@ -587,30 +655,30 @@ export default function CreateGoalScreen() {
                   Create a goal
                 </Text>
               </View>
-
-              <View className="h-10 w-10 items-center justify-center rounded-full bg-[#E7EFE3]">
-                <Ionicons name="leaf-outline" size={18} color={COLORS.green} />
-              </View>
             </View>
 
-            <Text className="mt-4 max-w-[320px] text-[10px] leading-[16px] text-[#777C74]">
-              Choose something meaningful to you. Keep it simple, measurable and
-              achievable.
+            <Text className="mt-4 max-w-[330px] text-[10px] leading-[16px] text-[#777C74]">
+              Start with one thing that matters to you. You can refine it later
+              as your journey changes.
             </Text>
           </View>
 
-          {/* ==============================================================
+          {/* ================================================================
               ERROR
-          ============================================================== */}
+          ================================================================ */}
 
           {mainError ? (
-            <View className="mx-[18px] mb-5 rounded-[6px] border border-[#E8CACA] bg-[#FBEEEE] px-3.5 py-3">
+            <View className="mx-[18px] mb-5 rounded-[8px] border border-[#E8CACA] bg-[#FBEFEE] px-3.5 py-3">
               <View className="flex-row items-start">
-                <Ionicons name="warning-outline" size={16} color={COLORS.red} />
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={16}
+                  color={COLORS.red}
+                />
 
                 <View className="ml-2.5 flex-1">
                   <Text className="text-[10px] font-bold text-[#8F3E3E]">
-                    Please check your goal
+                    We couldn't create this goal
                   </Text>
 
                   <Text className="mt-0.5 text-[9px] leading-[14px] text-[#B34D4D]">
@@ -621,7 +689,7 @@ export default function CreateGoalScreen() {
                 <TouchableOpacity
                   disabled={saving}
                   onPress={() => setMainError("")}
-                  className="ml-2"
+                  hitSlop={8}
                 >
                   <Ionicons name="close" size={15} color={COLORS.red} />
                 </TouchableOpacity>
@@ -629,18 +697,16 @@ export default function CreateGoalScreen() {
             </View>
           ) : null}
 
-          {/* ==============================================================
+          {/* ================================================================
               FORM
-          ============================================================== */}
+          ================================================================ */}
 
           <View className="px-[18px]">
-            {/* ============================================================
-                BASIC DETAILS
-            ============================================================ */}
+            {/* BASIC DETAILS */}
 
             <View className="mb-7">
               <SectionHeader
-                eyebrow="01"
+                number="01"
                 title="The intention"
                 subtitle="What would you like to improve?"
               />
@@ -648,7 +714,6 @@ export default function CreateGoalScreen() {
               <FormInput
                 label="Goal title"
                 required
-                icon="flag-outline"
                 placeholder="e.g. Improve my sleep"
                 value={title}
                 error={errors.title}
@@ -661,13 +726,12 @@ export default function CreateGoalScreen() {
 
               <FormInput
                 label="Description"
-                icon="document-text-outline"
+                hint="Optional"
                 placeholder="Describe what this goal means to you"
                 value={description}
                 error={errors.description}
                 disabled={saving}
                 multiline
-                hint="Optional"
                 onChangeText={(value) => {
                   setDescription(value);
                   clearError("description");
@@ -675,13 +739,11 @@ export default function CreateGoalScreen() {
               />
             </View>
 
-            {/* ============================================================
-                CATEGORY
-            ============================================================ */}
+            {/* CATEGORY */}
 
             <View className="mb-7">
               <SectionHeader
-                eyebrow="02"
+                number="02"
                 title="Area of wellness"
                 subtitle="Choose the area this intention belongs to."
               />
@@ -695,7 +757,6 @@ export default function CreateGoalScreen() {
                     disabled={saving}
                     onPress={() => {
                       setCategory(item.value);
-
                       clearError("category");
                     }}
                   />
@@ -709,30 +770,26 @@ export default function CreateGoalScreen() {
                     size={12}
                     color={COLORS.red}
                   />
-
-                  <Text className="ml-1 text-[9px] text-[#C64D4D]">
+                  <Text className="ml-1 text-[9px] text-[#C65353]">
                     {errors.category}
                   </Text>
                 </View>
               ) : null}
             </View>
 
-            {/* ============================================================
-                TARGET
-            ============================================================ */}
+            {/* TARGET */}
 
             <View className="mb-7">
               <SectionHeader
-                eyebrow="03"
+                number="03"
                 title="Your target"
-                subtitle="Give your goal a simple measure when useful."
+                subtitle="Add a simple measure when having one is useful."
               />
 
               <View className="flex-row">
                 <View className="mr-2 flex-1">
                   <FormInput
                     label="Value"
-                    icon="analytics-outline"
                     placeholder="e.g. 8"
                     value={targetValue}
                     error={errors.targetValue}
@@ -740,7 +797,6 @@ export default function CreateGoalScreen() {
                     keyboardType="decimal-pad"
                     onChangeText={(value) => {
                       setTargetValue(value);
-
                       clearError("targetValue");
                     }}
                   />
@@ -749,14 +805,12 @@ export default function CreateGoalScreen() {
                 <View className="flex-1">
                   <FormInput
                     label="Unit"
-                    icon="resize-outline"
                     placeholder="hours, kg..."
                     value={targetUnit}
                     error={errors.targetUnit}
                     disabled={saving}
                     onChangeText={(value) => {
                       setTargetUnit(value);
-
                       clearError("targetUnit");
                     }}
                   />
@@ -764,132 +818,91 @@ export default function CreateGoalScreen() {
               </View>
 
               <FormInput
-                label="What does this target mean?"
-                icon="information-circle-outline"
+                label="Target description"
+                hint="Optional"
                 placeholder="e.g. Sleep for at least 8 hours each night"
                 value={targetDescription}
                 error={errors.targetDescription}
                 disabled={saving}
                 multiline
-                hint="Optional"
                 onChangeText={(value) => {
                   setTargetDescription(value);
-
                   clearError("targetDescription");
                 }}
               />
             </View>
 
-            {/* ============================================================
-                TIMELINE
-            ============================================================ */}
+            {/* TIMELINE */}
 
             <View className="mb-7">
               <SectionHeader
-                eyebrow="04"
+                number="04"
                 title="Your timeline"
                 subtitle="Choose when you want to begin and, if useful, when to reach it."
               />
 
-              <DateField
-                label="Start date"
-                required
-                subtitle="Goal begins"
-                placeholder="Select start date"
-                date={startDate ?? undefined}
-                icon="calendar-outline"
-                error={errors.startDate}
-                disabled={saving}
-                onPress={() => setShowStartPicker(true)}
-              />
-
-              {showStartPicker && !saving ? (
-                <DateTimePicker
-                  value={startDate ?? new Date()}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  onChange={(event, selectedDate) => {
-                    setShowStartPicker(false);
-
-                    if (selectedDate) {
-                      setStartDate(selectedDate);
-
-                      clearError("startDate");
-
-                      if (targetDate && targetDate < selectedDate) {
-                        setTargetDate(null);
-
-                        setErrors((previous) => ({
-                          ...previous,
-                          targetDate: "",
-                        }));
-                      }
-                    }
-                  }}
+              <View className="flex-row">
+                <DateField
+                  label="Start date"
+                  required
+                  subtitle="Goal begins"
+                  placeholder="Select date"
+                  date={startDate ?? undefined}
+                  error={errors.startDate}
+                  disabled={saving}
+                  onPress={() => openDatePicker("start")}
                 />
-              ) : null}
 
-              <DateField
-                label="Target date"
-                subtitle="Optional deadline"
-                placeholder="Choose a target date"
-                date={targetDate ?? undefined}
-                icon="flag-outline"
-                error={errors.targetDate}
-                disabled={saving}
-                onPress={() => setShowTargetPicker(true)}
-              />
+                <View className="w-2.5" />
 
-              {showTargetPicker && !saving ? (
-                <DateTimePicker
-                  value={targetDate ?? startDate ?? new Date()}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  minimumDate={startDate ?? undefined}
-                  onChange={(event, selectedDate) => {
-                    setShowTargetPicker(false);
-
-                    if (selectedDate) {
-                      setTargetDate(selectedDate);
-
-                      clearError("targetDate");
-                    }
-                  }}
+                <DateField
+                  label="Target date"
+                  subtitle="Optional"
+                  placeholder="Choose date"
+                  date={targetDate ?? undefined}
+                  error={errors.targetDate}
+                  disabled={saving}
+                  onPress={() => openDatePicker("target")}
                 />
-              ) : null}
-            </View>
-
-            {/* ============================================================
-                SUMMARY
-            ============================================================ */}
-
-            <View className="mb-5 rounded-[6px] border border-[#DCE6D8] bg-[#F0F5ED] px-4 py-3.5">
-              <View className="flex-row items-start">
-                <Ionicons name="leaf-outline" size={16} color={COLORS.green} />
-
-                <View className="ml-2.5 flex-1">
-                  <Text className="text-[10px] font-bold text-[#405743]">
-                    A gentle reminder
-                  </Text>
-
-                  <Text className="mt-1 text-[9px] leading-[14px] text-[#718071]">
-                    Your goal can evolve with you. You can update its progress,
-                    milestones and status later.
-                  </Text>
-                </View>
               </View>
+
+              {/* Android native picker */}
+
+              {Platform.OS === "android" && pickerKind ? (
+                <DateTimePicker
+                  value={pickerDate}
+                  mode="date"
+                  minimumDate={
+                    pickerKind === "target"
+                      ? (startDate ?? undefined)
+                      : undefined
+                  }
+                  onChange={handleAndroidDateChange}
+                />
+              ) : null}
             </View>
 
-            {/* ============================================================
-                CREATE
-            ============================================================ */}
+            {/* SMALL SUMMARY */}
+
+            <View className="mb-5 rounded-[8px] border border-[#E1DDD4] bg-[#FBFAF7] px-4 py-3.5">
+              <Text className="text-[9px] font-semibold uppercase tracking-[1px] text-[#7C837A]">
+                Before you begin
+              </Text>
+
+              <Text className="mt-1.5 text-[10px] leading-[15px] text-[#777D75]">
+                Keep the goal specific enough to recognize progress, but
+                flexible enough to fit real life.
+              </Text>
+            </View>
+
+            {/* CREATE BUTTON */}
 
             <TouchableOpacity
               disabled={saving}
               activeOpacity={0.85}
               onPress={handleCreate}
-              className={`mb-2 overflow-hidden rounded-[5px] ${
-                saving ? "bg-[#A5B5A7]" : "bg-[#4D6A50]"
+              className={`mb-2 rounded-[7px] ${
+                saving ? "bg-[#8FA08F]" : "bg-[#4D6A50]"
               }`}
             >
               <View className="h-[52px] flex-row items-center justify-center">
@@ -898,31 +911,70 @@ export default function CreateGoalScreen() {
                     <ActivityIndicator size="small" color="#FFFFFF" />
 
                     <Text className="ml-2.5 text-[11px] font-bold text-white">
-                      Creating...
+                      Creating goal...
                     </Text>
                   </>
                 ) : (
                   <>
-                    <Ionicons
-                      name="checkmark-circle-outline"
-                      size={18}
-                      color="#FFFFFF"
-                    />
+                    <Ionicons name="add" size={18} color="#FFFFFF" />
 
-                    <Text className="ml-2 text-[11px] font-bold text-white">
-                      Create Goal
+                    <Text className="ml-1.5 text-[11px] font-bold text-white">
+                      Create goal
                     </Text>
                   </>
                 )}
               </View>
             </TouchableOpacity>
 
-            <Text className="mb-5 text-center text-[8px] leading-[13px] text-[#A0A29A]">
-              You can update your goal and progress anytime.
+            <Text className="mb-4 text-center text-[8px] leading-[13px] text-[#A0A29A]">
+              You can edit the goal, dates and progress later.
             </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* ================================================================
+          SAVE LOADING OVERLAY
+      ================================================================= */}
+
+      {saving ? (
+        <View
+          pointerEvents="auto"
+          className="absolute inset-0 items-center justify-center bg-[#263128]/20"
+        >
+          <View className="mx-10 w-full max-w-[290px] rounded-[14px] border border-[#E2DDD3] bg-white px-6 py-6">
+            <View className="items-center">
+              <View className="h-11 w-11 items-center justify-center rounded-full bg-[#EAF1E7]">
+                <ActivityIndicator size="small" color={COLORS.green} />
+              </View>
+
+              <Text className="mt-4 font-serif text-[18px] font-bold text-[#2C352D]">
+                Creating your goal
+              </Text>
+
+              <Text className="mt-1.5 text-center text-[9px] leading-[15px] text-[#777D75]">
+                Saving your details. Please wait a moment.
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
+
+      {/* ================================================================
+          iOS DATE PICKER
+      ================================================================= */}
+
+      <DatePickerSheet
+        visible={Platform.OS === "ios" && pickerKind !== null}
+        title={selectedPickerTitle}
+        value={pickerDate}
+        minimumDate={
+          pickerKind === "target" ? (startDate ?? undefined) : undefined
+        }
+        onCancel={closeDatePicker}
+        onDone={confirmDatePicker}
+        onChange={setPickerDate}
+      />
     </SafeAreaView>
   );
 }

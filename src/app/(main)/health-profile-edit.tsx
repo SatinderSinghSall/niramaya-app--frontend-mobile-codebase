@@ -1,8 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -1141,6 +1148,8 @@ function LoadingScreen() {
 ========================================================================== */
 
 export default function HealthProfileEditScreen() {
+  const scrollViewRef = useRef<ScrollView>(null);
+
   const [profile, setProfile] = useState<HealthProfile | null>(null);
 
   const [activeSection, setActiveSection] = useState<SectionKey>("personal");
@@ -1179,6 +1188,26 @@ export default function HealthProfileEditScreen() {
       return undefined;
     }, [loadProfile]),
   );
+
+  useEffect(() => {
+    const scrollToBottom = () => {
+      // Give the keyboard + layout a moment to finish resizing.
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({
+          animated: true,
+        });
+      }, 180);
+    };
+
+    const keyboardShowEvent =
+      Platform.OS === "ios"
+        ? Keyboard.addListener("keyboardWillShow", scrollToBottom)
+        : Keyboard.addListener("keyboardDidShow", scrollToBottom);
+
+    return () => {
+      keyboardShowEvent.remove();
+    };
+  }, []);
 
   const activeMeta = useMemo(
     () => SECTION_META[activeSection],
@@ -1304,7 +1333,8 @@ export default function HealthProfileEditScreen() {
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F7F5EF]">
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
       >
         {/* ================================================================
             HEADER
@@ -1359,12 +1389,14 @@ export default function HealthProfileEditScreen() {
         ================================================================= */}
 
         <ScrollView
+          ref={scrollViewRef}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="none"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 18,
             paddingTop: 18,
-            paddingBottom: 45,
+            paddingBottom: Platform.OS === "android" ? 60 : 40,
           }}
         >
           {/* Intro */}

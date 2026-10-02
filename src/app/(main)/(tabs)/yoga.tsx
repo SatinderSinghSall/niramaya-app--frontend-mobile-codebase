@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-
 import {
   ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   Text,
@@ -10,52 +11,37 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-
 import { getYoga, getYogaCategories } from "@/services/explore.service";
-
 import { CategoryItem, ExploreItem } from "@/types/explore";
-
 import ExploreContentCard from "@/components/explore/ExploreContentCard";
-import ExploreEmptyState from "@/components/explore/ExploreEmptyState";
-
 /* -------------------------------------------------------------------------- */
 /* Colors                                                                     */
 /* -------------------------------------------------------------------------- */
-
 const COLORS = {
   background: "#F7F3EA",
   surface: "#FFFFFF",
-
   text: "#273128",
   muted: "#777C74",
   softMuted: "#A0A29B",
-
   green: "#4D6A50",
   darkGreen: "#31543B",
-
   lightGreen: "#DDE7D8",
   lighterGreen: "#EEF5EC",
-
   border: "#E5E0D6",
   inputBorder: "#DDD8CD",
 };
-
 /* -------------------------------------------------------------------------- */
 /* Hero image                                                                 */
 /* -------------------------------------------------------------------------- */
-
 const YOGA_HERO = {
-  uri: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1400&q=88",
+  uri: "https\://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1400&q=88",
 };
-
 /* -------------------------------------------------------------------------- */
 /* Category Helpers                                                           */
 /* -------------------------------------------------------------------------- */
-
 function getRawCategoryValue(category: CategoryItem, index: number) {
   const data = category as CategoryItem & {
     value?: string;
@@ -65,7 +51,6 @@ function getRawCategoryValue(category: CategoryItem, index: number) {
     key?: string;
     category?: string;
   };
-
   return (
     data.value ||
     data.slug ||
@@ -76,10 +61,8 @@ function getRawCategoryValue(category: CategoryItem, index: number) {
     `category-${index}`
   );
 }
-
 function formatCategoryLabel(value?: string) {
   if (!value) return "";
-
   return value
     .replace(/_/g, " ")
     .replace(/-/g, " ")
@@ -87,21 +70,16 @@ function formatCategoryLabel(value?: string) {
     .trim()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
-
 function getItemCategory(item: ExploreItem) {
   const category = item.category;
-
   if (!category) {
     return null;
   }
-
   return String(category);
 }
-
 /* -------------------------------------------------------------------------- */
 /* Header                                                                     */
 /* -------------------------------------------------------------------------- */
-
 function YogaHeader() {
   return (
     <View className="mb-2">
@@ -116,7 +94,6 @@ function YogaHeader() {
       >
         <Ionicons name="arrow-back" size={19} color={COLORS.text} />
       </TouchableOpacity>
-
       <Text
         className="text-[11px] font-medium"
         style={{
@@ -125,7 +102,6 @@ function YogaHeader() {
       >
         Mindful movement
       </Text>
-
       <Text
         className="mt-1 text-[30px] font-bold"
         style={{
@@ -135,7 +111,6 @@ function YogaHeader() {
       >
         Yoga
       </Text>
-
       <Text
         className="mt-2 max-w-[340px] text-[13px] leading-5"
         style={{
@@ -148,11 +123,9 @@ function YogaHeader() {
     </View>
   );
 }
-
 /* -------------------------------------------------------------------------- */
 /* Search                                                                     */
 /* -------------------------------------------------------------------------- */
-
 function YogaSearch({
   value,
   onChangeText,
@@ -172,7 +145,6 @@ function YogaSearch({
       }}
     >
       <Ionicons name="search-outline" size={19} color={COLORS.muted} />
-
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -185,7 +157,6 @@ function YogaSearch({
           color: COLORS.text,
         }}
       />
-
       {value.length > 0 ? (
         <TouchableOpacity
           onPress={onClear}
@@ -198,11 +169,9 @@ function YogaSearch({
     </View>
   );
 }
-
 /* -------------------------------------------------------------------------- */
 /* Hero                                                                       */
 /* -------------------------------------------------------------------------- */
-
 function YogaHero() {
   return (
     <View
@@ -217,19 +186,16 @@ function YogaHero() {
         resizeMode="cover"
         className="absolute inset-0 h-full w-full"
       />
-
       <View
         className="absolute inset-0"
         style={{
           backgroundColor: "rgba(30, 50, 36, 0.38)",
         }}
       />
-
       <View className="flex-1 justify-end p-5">
         <Text className="text-[9px] font-bold uppercase tracking-[2px] text-white/80">
           FIND YOUR PRACTICE
         </Text>
-
         <Text
           className="mt-2 max-w-[290px] text-[24px] font-bold leading-8 text-white"
           style={{
@@ -240,7 +206,6 @@ function YogaHero() {
           {"\n"}
           Breathe deeply.
         </Text>
-
         <Text className="mt-2 max-w-[300px] text-[12px] leading-[18px] text-white/85">
           Begin where you are and discover a practice that feels right for you.
         </Text>
@@ -248,11 +213,9 @@ function YogaHero() {
     </View>
   );
 }
-
 /* -------------------------------------------------------------------------- */
 /* Intro                                                                      */
 /* -------------------------------------------------------------------------- */
-
 function YogaIntroCard() {
   return (
     <View
@@ -270,7 +233,6 @@ function YogaIntroCard() {
         >
           <Ionicons name="leaf-outline" size={20} color={COLORS.darkGreen} />
         </View>
-
         <View className="flex-1">
           <Text
             className="text-[17px] font-bold"
@@ -281,7 +243,6 @@ function YogaIntroCard() {
           >
             Find your rhythm
           </Text>
-
           <Text
             className="mt-1 text-[11px] leading-[17px]"
             style={{
@@ -296,11 +257,9 @@ function YogaIntroCard() {
     </View>
   );
 }
-
 /* -------------------------------------------------------------------------- */
 /* Category Button                                                            */
 /* -------------------------------------------------------------------------- */
-
 function CategoryButton({
   label,
   selected,
@@ -336,11 +295,9 @@ function CategoryButton({
     </TouchableOpacity>
   );
 }
-
 /* -------------------------------------------------------------------------- */
 /* Category Section                                                           */
 /* -------------------------------------------------------------------------- */
-
 function CategorySection({
   categories,
   selectedCategory,
@@ -356,7 +313,6 @@ function CategorySection({
   if (categories.length === 0) {
     return null;
   }
-
   return (
     <View className="mt-8">
       <View className="flex-row items-end justify-between">
@@ -370,7 +326,6 @@ function CategorySection({
           >
             Explore by practice
           </Text>
-
           <Text
             className="mt-1 text-[11px]"
             style={{
@@ -381,7 +336,6 @@ function CategorySection({
           </Text>
         </View>
       </View>
-
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -395,7 +349,6 @@ function CategorySection({
           selected={!selectedCategory}
           onPress={() => onSelect(null)}
         />
-
         {categories.map((category) => (
           <CategoryButton
             key={category.value}
@@ -408,11 +361,9 @@ function CategorySection({
     </View>
   );
 }
-
 /* -------------------------------------------------------------------------- */
 /* Calm Strip                                                                 */
 /* -------------------------------------------------------------------------- */
-
 function CalmStrip() {
   return (
     <View className="mt-8 flex-row">
@@ -425,28 +376,24 @@ function CalmStrip() {
       >
         <Image
           source={{
-            uri: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=700&q=85",
+            uri: "https\://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=700&q=85",
           }}
           resizeMode="cover"
           className="absolute inset-0 h-full w-full"
         />
-
         <View
           className="absolute inset-0"
           style={{
             backgroundColor: "rgba(40,65,48,0.30)",
           }}
         />
-
         <View className="flex-1 justify-end p-3.5">
           <Text className="text-[15px] font-bold text-white">Breathe</Text>
-
           <Text className="mt-1 text-[10px] text-white/85">
             Slow down and reconnect
           </Text>
         </View>
       </View>
-
       <View
         className="ml-1.5 flex-1 overflow-hidden rounded-[18px]"
         style={{
@@ -456,22 +403,19 @@ function CalmStrip() {
       >
         <Image
           source={{
-            uri: "https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=700&q=85",
+            uri: "https\://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=700&q=85",
           }}
           resizeMode="cover"
           className="absolute inset-0 h-full w-full"
         />
-
         <View
           className="absolute inset-0"
           style={{
             backgroundColor: "rgba(45,45,30,0.24)",
           }}
         />
-
         <View className="flex-1 justify-end p-3.5">
           <Text className="text-[15px] font-bold text-white">Be present</Text>
-
           <Text className="mt-1 text-[10px] text-white/85">
             Make space for yourself
           </Text>
@@ -480,56 +424,187 @@ function CalmStrip() {
     </View>
   );
 }
-
 /* -------------------------------------------------------------------------- */
 /* Screen                                                                     */
 /* -------------------------------------------------------------------------- */
 
+function YogaSkeleton() {
+  return (
+    <SafeAreaView
+      edges={["top"]}
+      className="flex-1"
+      style={{ backgroundColor: COLORS.background }}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 18,
+          paddingTop: 12,
+          paddingBottom: 55,
+        }}
+      >
+        <View className="mb-2">
+          <View className="h-10 w-10 rounded-full bg-[#E8E3D9]" />
+          <View className="mt-5 h-3 w-28 rounded bg-[#E8E3D9]" />
+          <View className="mt-2 h-9 w-24 rounded bg-[#E8E3D9]" />
+          <View className="mt-2 h-4 w-[82%] rounded bg-[#E8E3D9]" />
+          <View className="mt-1.5 h-4 w-[64%] rounded bg-[#E8E3D9]" />
+        </View>
+        <View className="mt-5 h-[50px] rounded-[16px] bg-[#EAE6DD]" />
+        <View className="mt-5 h-[205px] rounded-[22px] bg-[#E5E0D6]" />
+        <View className="mt-5 rounded-[18px] bg-[#E1E9DD] p-4">
+          <View className="flex-row items-center">
+            <View className="h-10 w-10 rounded-full bg-[#C9D8C3]" />
+            <View className="ml-3 flex-1">
+              <View className="h-5 w-36 rounded bg-[#C9D8C3]" />
+              <View className="mt-2 h-3 w-[88%] rounded bg-[#CBDAC5]" />
+              <View className="mt-1.5 h-3 w-[72%] rounded bg-[#CBDAC5]" />
+            </View>
+          </View>
+        </View>
+        <View className="mt-8">
+          <View className="h-6 w-44 rounded bg-[#E8E3D9]" />
+          <View className="mt-2 h-3 w-56 rounded bg-[#E8E3D9]" />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mt-3"
+          >
+            {[1, 2, 3, 4].map((item) => (
+              <View
+                key={item}
+                className="mr-2 h-[38px] w-20 rounded-full bg-[#E7E3DA]"
+              />
+            ))}
+          </ScrollView>
+        </View>
+        <View className="mt-9">
+          <View className="h-6 w-40 rounded bg-[#E8E3D9]" />
+          <View className="mt-2 h-3 w-32 rounded bg-[#E8E3D9]" />
+          {[1, 2, 3].map((item) => (
+            <View
+              key={item}
+              className="mt-4 rounded-[18px] bg-white p-4"
+              style={{ borderWidth: 1, borderColor: COLORS.border }}
+            >
+              <View className="h-32 rounded-[14px] bg-[#E9E5DC]" />
+              <View className="mt-3 h-4 w-[70%] rounded bg-[#E8E3D9]" />
+              <View className="mt-2 h-3 w-[92%] rounded bg-[#E8E3D9]" />
+              <View className="mt-1.5 h-3 w-[62%] rounded bg-[#E8E3D9]" />
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function YogaEmptyState({ searched }: { searched: boolean }) {
+  return (
+    <View
+      className="rounded-[20px] bg-white px-5 py-8"
+      style={{
+        borderWidth: 1,
+        borderColor: COLORS.border,
+      }}
+    >
+      <View className="items-center">
+        {/* Simple icon */}
+        <View
+          className="h-14 w-14 items-center justify-center rounded-full"
+          style={{
+            backgroundColor: COLORS.lighterGreen,
+          }}
+        >
+          <Ionicons
+            name={searched ? "search-outline" : "leaf-outline"}
+            size={24}
+            color={COLORS.green}
+          />
+        </View>
+
+        {/* Title */}
+        <Text
+          className="mt-4 text-center text-[19px] font-bold"
+          style={{
+            color: COLORS.text,
+            fontFamily: "serif",
+          }}
+        >
+          {searched ? "Nothing found" : "No practices yet"}
+        </Text>
+
+        {/* Description */}
+        <Text
+          className="mt-2 max-w-[290px] text-center text-[12px] leading-5"
+          style={{
+            color: COLORS.muted,
+          }}
+        >
+          {searched
+            ? "Try a different search term or explore another practice."
+            : "Yoga practices will appear here when they become available."}
+        </Text>
+
+        {/* Small natural hint */}
+        <View className="mt-5 flex-row items-center">
+          <Ionicons
+            name="arrow-forward-outline"
+            size={14}
+            color={COLORS.green}
+          />
+
+          <Text
+            className="ml-1.5 text-[11px] font-medium"
+            style={{
+              color: COLORS.green,
+            }}
+          >
+            {searched ? "Try another search" : "Browse practices"}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export default function YogaScreen() {
   const [items, setItems] = useState<ExploreItem[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
-
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
   const [search, setSearch] = useState("");
-
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
   const [error, setError] = useState("");
 
   /* ---------------------------------------------------------------------- */
   /* Load Yoga                                                              */
   /* ---------------------------------------------------------------------- */
-
   const loadYoga = useCallback(
     async (category = selectedCategory, showLoader = false) => {
       try {
         if (showLoader) {
           setLoading(true);
         }
-
         setError("");
-
         const [yogaData, categoryData] = await Promise.all([
           getYoga({
             category: category || undefined,
             page: 1,
             limit: 30,
           }),
-
           getYogaCategories(),
         ]);
-
         setItems(yogaData);
         setCategories(categoryData);
       } catch (err: any) {
         console.error("Yoga loading error:", err);
+        const serverMessage = err?.response?.data?.message;
 
         setError(
-          err?.response?.data?.message ||
-            err?.message ||
-            "Unable to load yoga practices.",
+          typeof serverMessage === "string" && serverMessage.trim()
+            ? serverMessage.trim()
+            : "We couldn't load yoga practices right now. Please check your connection and try again.",
         );
       } finally {
         setLoading(false);
@@ -538,52 +613,39 @@ export default function YogaScreen() {
     },
     [selectedCategory],
   );
-
   /* ---------------------------------------------------------------------- */
   /* Initial Load                                                           */
   /* ---------------------------------------------------------------------- */
-
   useEffect(() => {
     loadYoga(selectedCategory, true);
   }, []);
-
   /* ---------------------------------------------------------------------- */
   /* Refresh on Focus                                                       */
   /* ---------------------------------------------------------------------- */
-
   useFocusEffect(
     useCallback(() => {
       loadYoga(selectedCategory, false);
-
       return undefined;
     }, [loadYoga, selectedCategory]),
   );
-
   /* ---------------------------------------------------------------------- */
   /* Category Handling                                                      */
   /* ---------------------------------------------------------------------- */
-
   const handleCategory = async (value: string | null) => {
     setSelectedCategory(value);
     setSearch("");
-
     await loadYoga(value, true);
   };
-
   /* ---------------------------------------------------------------------- */
   /* Pull Refresh                                                           */
   /* ---------------------------------------------------------------------- */
-
   const handleRefresh = async () => {
     setRefreshing(true);
-
     await loadYoga(selectedCategory, false);
   };
-
   /* ---------------------------------------------------------------------- */
   /* Build Clean Categories                                                 */
   /* ---------------------------------------------------------------------- */
-
   const cleanCategories = useMemo(() => {
     const map = new Map<
       string,
@@ -592,25 +654,19 @@ export default function YogaScreen() {
         label: string;
       }
     >();
-
     /*
      * First use categories returned by backend.
      */
-
     categories.forEach((category, index) => {
       const value = getRawCategoryValue(category, index);
-
       /*
        * Don't show useless fallback labels such as
        * "Category".
        */
-
       if (!value || value.startsWith("category-")) {
         return;
       }
-
       const label = formatCategoryLabel(value);
-
       if (label && label.toLowerCase() !== "category") {
         map.set(value, {
           value,
@@ -618,7 +674,6 @@ export default function YogaScreen() {
         });
       }
     });
-
     /*
      * Then use actual categories from yoga items.
      *
@@ -630,20 +685,15 @@ export default function YogaScreen() {
      * Stress Relief
      * Mobility
      */
-
     items.forEach((item) => {
       const category = getItemCategory(item);
-
       if (!category) {
         return;
       }
-
       const label = formatCategoryLabel(category);
-
       if (!label || label.toLowerCase() === "category") {
         return;
       }
-
       if (!map.has(category)) {
         map.set(category, {
           value: category,
@@ -651,69 +701,37 @@ export default function YogaScreen() {
         });
       }
     });
-
     return Array.from(map.values());
   }, [categories, items]);
-
   /* ---------------------------------------------------------------------- */
   /* Search Filtering                                                       */
   /* ---------------------------------------------------------------------- */
-
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();
-
     if (!query) {
       return items;
     }
-
     return items.filter((item) => {
       const title = item.title || item.name || "";
-
       const description = item.description || "";
-
       const category = item.category || "";
-
       const difficulty = item.difficulty || "";
-
       const searchableText = [title, description, category, difficulty]
         .join(" ")
         .toLowerCase();
-
       return searchableText.includes(query);
     });
   }, [items, search]);
-
   /* ---------------------------------------------------------------------- */
   /* Loading                                                                */
   /* ---------------------------------------------------------------------- */
-
-  if (loading) {
-    return (
-      <SafeAreaView
-        edges={["top"]}
-        className="flex-1 items-center justify-center"
-        style={{
-          backgroundColor: COLORS.background,
-        }}
-      >
-        <ActivityIndicator size="small" color={COLORS.green} />
-
-        <Text
-          className="mt-4 text-[13px]"
-          style={{
-            color: COLORS.muted,
-          }}
-        >
-          Finding your practice...
-        </Text>
-      </SafeAreaView>
-    );
+  if (loading && items.length === 0) {
+    return <YogaSkeleton />;
   }
 
   /* ---------------------------------------------------------------------- */
   /* Error                                                                  */
   /* ---------------------------------------------------------------------- */
-
   if (error) {
     return (
       <SafeAreaView
@@ -739,7 +757,6 @@ export default function YogaScreen() {
             >
               <Ionicons name="leaf-outline" size={25} color={COLORS.green} />
             </View>
-
             <Text
               className="mt-4 text-[21px] font-bold"
               style={{
@@ -749,7 +766,6 @@ export default function YogaScreen() {
             >
               Yoga is unavailable
             </Text>
-
             <Text
               className="mt-2 text-center text-[13px] leading-5"
               style={{
@@ -759,7 +775,6 @@ export default function YogaScreen() {
               {error}
             </Text>
           </View>
-
           <TouchableOpacity
             onPress={() => loadYoga(selectedCategory, true)}
             activeOpacity={0.8}
@@ -776,11 +791,9 @@ export default function YogaScreen() {
       </SafeAreaView>
     );
   }
-
   /* ---------------------------------------------------------------------- */
   /* Main                                                                   */
   /* ---------------------------------------------------------------------- */
-
   return (
     <SafeAreaView
       edges={["top"]}
@@ -789,224 +802,213 @@ export default function YogaScreen() {
         backgroundColor: COLORS.background,
       }}
     >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={COLORS.green}
-          />
-        }
-        contentContainerStyle={{
-          paddingHorizontal: 18,
-          paddingTop: 12,
-          paddingBottom: 55,
-        }}
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 4 : 0}
       >
-        {/* -------------------------------------------------------------- */}
-        {/* Header                                                         */}
-        {/* -------------------------------------------------------------- */}
-
-        <YogaHeader />
-
-        {/* -------------------------------------------------------------- */}
-        {/* Search                                                         */}
-        {/* -------------------------------------------------------------- */}
-
-        <YogaSearch
-          value={search}
-          onChangeText={setSearch}
-          onClear={() => setSearch("")}
-        />
-
-        {/* -------------------------------------------------------------- */}
-        {/* Hero                                                           */}
-        {/* -------------------------------------------------------------- */}
-
-        <YogaHero />
-
-        {/* -------------------------------------------------------------- */}
-        {/* Intro                                                          */}
-        {/* -------------------------------------------------------------- */}
-
-        <YogaIntroCard />
-
-        {/* -------------------------------------------------------------- */}
-        {/* Categories                                                     */}
-        {/* -------------------------------------------------------------- */}
-
-        <CategorySection
-          categories={cleanCategories}
-          selectedCategory={selectedCategory}
-          onSelect={handleCategory}
-        />
-
-        {/* -------------------------------------------------------------- */}
-        {/* Results Header                                                  */}
-        {/* -------------------------------------------------------------- */}
-
-        <View className="mt-9">
-          <View className="flex-row items-end justify-between">
-            <View className="flex-1">
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="none"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={COLORS.green}
+            />
+          }
+          contentContainerStyle={{
+            paddingHorizontal: 18,
+            paddingTop: 12,
+            paddingBottom: 32,
+          }}
+        >
+          {/* -------------------------------------------------------------- */}
+          {/* Header                                                         */}
+          {/* -------------------------------------------------------------- */}
+          <YogaHeader />
+          {/* -------------------------------------------------------------- */}
+          {/* Search                                                         */}
+          {/* -------------------------------------------------------------- */}
+          <YogaSearch
+            value={search}
+            onChangeText={setSearch}
+            onClear={() => setSearch("")}
+          />
+          {/* -------------------------------------------------------------- */}
+          {/* Hero                                                           */}
+          {/* -------------------------------------------------------------- */}
+          <YogaHero />
+          {loading && items.length > 0 ? (
+            <View className="mt-3 flex-row items-center justify-center">
+              <ActivityIndicator size="small" color={COLORS.green} />
               <Text
-                className="text-[21px] font-bold"
+                className="ml-2 text-[10px]"
+                style={{ color: COLORS.muted }}
+              >
+                Updating practices...
+              </Text>
+            </View>
+          ) : null}
+
+          {/* -------------------------------------------------------------- */}
+          {/* Intro                                                          */}
+          {/* -------------------------------------------------------------- */}
+          <YogaIntroCard />
+          {/* -------------------------------------------------------------- */}
+          {/* Categories                                                     */}
+          {/* -------------------------------------------------------------- */}
+          <CategorySection
+            categories={cleanCategories}
+            selectedCategory={selectedCategory}
+            onSelect={handleCategory}
+          />
+          {/* -------------------------------------------------------------- */}
+          {/* Results Header                                                  */}
+          {/* -------------------------------------------------------------- */}
+          <View className="mt-9">
+            <View className="flex-row items-end justify-between">
+              <View className="flex-1">
+                <Text
+                  className="text-[21px] font-bold"
+                  style={{
+                    color: COLORS.text,
+                    fontFamily: "serif",
+                  }}
+                >
+                  {search
+                    ? "Search results"
+                    : selectedCategory
+                      ? formatCategoryLabel(selectedCategory)
+                      : "All practices"}
+                </Text>
+                <Text
+                  className="mt-1 text-[11px]"
+                  style={{
+                    color: COLORS.muted,
+                  }}
+                >
+                  {search
+                    ? `${filteredItems.length} ${
+                        filteredItems.length === 1 ? "practice" : "practices"
+                      } found`
+                    : `${filteredItems.length} ${
+                        filteredItems.length === 1 ? "practice" : "practices"
+                      } available`}
+                </Text>
+              </View>
+              {/* Count */}
+              <View
+                className="h-7 min-w-7 items-center justify-center rounded-full px-2"
+                style={{
+                  backgroundColor: COLORS.lightGreen,
+                }}
+              >
+                <Text
+                  className="text-[10px] font-bold"
+                  style={{
+                    color: COLORS.green,
+                  }}
+                >
+                  {filteredItems.length}
+                </Text>
+              </View>
+            </View>
+            {/* ------------------------------------------------------------ */}
+            {/* Search active indicator                                      */}
+            {/* ------------------------------------------------------------ */}
+            {search ? (
+              <View className="mt-3 flex-row items-center">
+                <Ionicons
+                  name="search-outline"
+                  size={13}
+                  color={COLORS.green}
+                />
+                <Text
+                  className="ml-1.5 text-[11px]"
+                  style={{
+                    color: COLORS.muted,
+                  }}
+                >
+                  Showing results for "
+                  <Text
+                    className="font-semibold"
+                    style={{
+                      color: COLORS.green,
+                    }}
+                  >
+                    {search}
+                  </Text>
+                  "
+                </Text>
+              </View>
+            ) : null}
+            {/* ------------------------------------------------------------ */}
+            {/* Cards                                                        */}
+            {/* ------------------------------------------------------------ */}
+            {filteredItems.length > 0 ? (
+              <View className="mt-4 w-full">
+                {filteredItems.map((item) => (
+                  <ExploreContentCard
+                    key={item._id}
+                    item={item}
+                    type="yoga"
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(main)/yoga/[id]",
+                        params: {
+                          id: item._id,
+                        },
+                      })
+                    }
+                  />
+                ))}
+              </View>
+            ) : (
+              <View className="mt-5">
+                <YogaEmptyState searched={Boolean(search)} />
+              </View>
+            )}
+          </View>
+          {/* -------------------------------------------------------------- */}
+          {/* Calm Visual Section                                            */}
+          {/* -------------------------------------------------------------- */}
+          {!search && filteredItems.length > 0 ? <CalmStrip /> : null}
+          {/* -------------------------------------------------------------- */}
+          {/* Bottom Quote                                                   */}
+          {/* -------------------------------------------------------------- */}
+          {!search ? (
+            <View className="mt-10 items-center px-5">
+              <View
+                className="mb-5 h-px w-10"
+                style={{
+                  backgroundColor: COLORS.border,
+                }}
+              />
+              <Text
+                className="text-center text-[19px] font-bold leading-7"
                 style={{
                   color: COLORS.text,
                   fontFamily: "serif",
                 }}
               >
-                {search
-                  ? "Search results"
-                  : selectedCategory
-                    ? formatCategoryLabel(selectedCategory)
-                    : "All practices"}
+                Come to the practice
+                {"\n"}
+                with no expectation.
               </Text>
-
               <Text
-                className="mt-1 text-[11px]"
+                className="mt-3 text-center text-[11px] leading-5"
                 style={{
-                  color: COLORS.muted,
+                  color: COLORS.softMuted,
                 }}
               >
-                {search
-                  ? `${filteredItems.length} ${
-                      filteredItems.length === 1 ? "practice" : "practices"
-                    } found`
-                  : `${filteredItems.length} ${
-                      filteredItems.length === 1 ? "practice" : "practices"
-                    } available`}
-              </Text>
-            </View>
-
-            {/* Count */}
-
-            <View
-              className="h-7 min-w-7 items-center justify-center rounded-full px-2"
-              style={{
-                backgroundColor: COLORS.lightGreen,
-              }}
-            >
-              <Text
-                className="text-[10px] font-bold"
-                style={{
-                  color: COLORS.green,
-                }}
-              >
-                {filteredItems.length}
-              </Text>
-            </View>
-          </View>
-
-          {/* ------------------------------------------------------------ */}
-          {/* Search active indicator                                      */}
-          {/* ------------------------------------------------------------ */}
-
-          {search ? (
-            <View className="mt-3 flex-row items-center">
-              <Ionicons name="search-outline" size={13} color={COLORS.green} />
-
-              <Text
-                className="ml-1.5 text-[11px]"
-                style={{
-                  color: COLORS.muted,
-                }}
-              >
-                Showing results for "
-                <Text
-                  className="font-semibold"
-                  style={{
-                    color: COLORS.green,
-                  }}
-                >
-                  {search}
-                </Text>
-                "
+                Take a few moments for yourself.
               </Text>
             </View>
           ) : null}
-
-          {/* ------------------------------------------------------------ */}
-          {/* Cards                                                        */}
-          {/* ------------------------------------------------------------ */}
-
-          {filteredItems.length > 0 ? (
-            <View className="mt-4 w-full">
-              {filteredItems.map((item) => (
-                <ExploreContentCard
-                  key={item._id}
-                  item={item}
-                  type="yoga"
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(main)/yoga/[id]",
-                      params: {
-                        id: item._id,
-                      },
-                    })
-                  }
-                />
-              ))}
-            </View>
-          ) : (
-            <View className="mt-5">
-              <ExploreEmptyState
-                title={
-                  search ? "No yoga practices found" : "No practices available"
-                }
-                description={
-                  search
-                    ? "Try a different search such as morning, stress, breathing or mobility."
-                    : "Try another category or check back later for more practices."
-                }
-              />
-            </View>
-          )}
-        </View>
-
-        {/* -------------------------------------------------------------- */}
-        {/* Calm Visual Section                                            */}
-        {/* -------------------------------------------------------------- */}
-
-        {!search && filteredItems.length > 0 ? <CalmStrip /> : null}
-
-        {/* -------------------------------------------------------------- */}
-        {/* Bottom Quote                                                   */}
-        {/* -------------------------------------------------------------- */}
-
-        {!search ? (
-          <View className="mt-10 items-center px-5">
-            <View
-              className="mb-5 h-px w-10"
-              style={{
-                backgroundColor: COLORS.border,
-              }}
-            />
-
-            <Text
-              className="text-center text-[19px] font-bold leading-7"
-              style={{
-                color: COLORS.text,
-                fontFamily: "serif",
-              }}
-            >
-              Come to the practice
-              {"\n"}
-              with no expectation.
-            </Text>
-
-            <Text
-              className="mt-3 text-center text-[11px] leading-5"
-              style={{
-                color: COLORS.softMuted,
-              }}
-            >
-              Take a few moments for yourself.
-            </Text>
-          </View>
-        ) : null}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

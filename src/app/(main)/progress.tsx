@@ -1,8 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -443,6 +446,35 @@ export default function ProgressScreen() {
   const [dateFilter, setDateFilter] = useState<DateFilter>("30");
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
 
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  useEffect(() => {
+    // Android needs explicit keyboard height so the ScrollView
+    // has enough extra space to scroll its final content above
+    // the keyboard while the keyboard remains open.
+    if (Platform.OS !== "android") {
+      return;
+    }
+
+    const keyboardDidShowSubscription = Keyboard.addListener(
+      "keyboardDidShow",
+      (event) => {
+        setKeyboardHeight(event.endCoordinates.height);
+      },
+    );
+
+    const keyboardDidHideSubscription = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      },
+    );
+
+    return () => {
+      keyboardDidShowSubscription.remove();
+      keyboardDidHideSubscription.remove();
+    };
+  }, []);
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalEntries, setTotalEntries] = useState(0);
@@ -593,527 +625,579 @@ export default function ProgressScreen() {
       className="flex-1"
       style={{ backgroundColor: COLORS.background }}
     >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={COLORS.green}
-          />
-        }
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: 100,
-        }}
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Header */}
-        <View className="flex-row items-center justify-between pt-4">
-          <View className="flex-1 pr-4">
-            <Text className="text-[28px] font-bold text-[#263128]">
-              Progress
-            </Text>
-            <Text className="mt-1 text-[12px] leading-5 text-[#7C827A]">
-              Your wellness history and daily check-ins.
-            </Text>
-          </View>
-
-          <Pressable
-            onPress={() => router.push("/progress-create" as any)}
-            className="h-11 w-11 items-center justify-center rounded-xl bg-[#304B36] active:opacity-80"
-          >
-            <Ionicons name="add" size={23} color="#FFFFFF" />
-          </Pressable>
-        </View>
-
-        {/* Search */}
-        <View className="mt-5 flex-row items-center rounded-[18px] border border-[#E5E3DB] bg-white px-4">
-          <Ionicons name="search-outline" size={18} color={COLORS.softMuted} />
-
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search date, activity, note, mood..."
-            placeholderTextColor="#A4A89F"
-            className="h-12 flex-1 px-3 text-[13px] text-[#263128]"
-            returnKeyType="search"
-          />
-
-          {search.length > 0 ? (
-            <Pressable
-              onPress={() => setSearch("")}
-              className="h-7 w-7 items-center justify-center rounded-full bg-[#F1F2ED]"
-            >
-              <Ionicons name="close" size={14} color={COLORS.muted} />
-            </Pressable>
-          ) : null}
-        </View>
-
-        {/* Date filter */}
-        <View className="mt-5">
-          <View className="mb-2 flex-row items-center justify-between">
-            <Text className="text-[11px] font-semibold text-[#7C827A]">
-              Time period
-            </Text>
-            <Text className="text-[10px] text-[#A4A89F]">{filterLabel}</Text>
-          </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <FilterChip
-              label="7 days"
-              active={dateFilter === "7"}
-              onPress={() => {
-                setDateFilter("7");
-                setPage(1);
-              }}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={COLORS.green}
             />
-            <FilterChip
-              label="30 days"
-              active={dateFilter === "30"}
-              onPress={() => {
-                setDateFilter("30");
-                setPage(1);
-              }}
-            />
-            <FilterChip
-              label="90 days"
-              active={dateFilter === "90"}
-              onPress={() => {
-                setDateFilter("90");
-                setPage(1);
-              }}
-            />
-            <FilterChip
-              label="All time"
-              active={dateFilter === "all"}
-              onPress={() => {
-                setDateFilter("all");
-                setPage(1);
-              }}
-            />
-          </ScrollView>
-        </View>
+          }
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 20,
 
-        {/* Error */}
-        {error ? (
-          <View className="mt-5 rounded-[18px] border border-[#F0D4D4] bg-[#F8EAEA] p-4">
+            // IMPORTANT:
+            // Android gets extra scrollable space equal to the
+            // keyboard height. This lets us scroll all the way
+            // to the bottom while the keyboard stays OPEN.
+            paddingBottom: Platform.OS === "android" ? keyboardHeight + 50 : 50,
+          }}
+        >
+          {/* Header */}
+          <View className="pt-4">
             <View className="flex-row items-center">
-              <Ionicons
-                name="alert-circle-outline"
-                size={18}
-                color={COLORS.red}
-              />
-              <Text className="ml-2 flex-1 text-[12px] leading-5 text-[#A74E4E]">
-                {error}
-              </Text>
-            </View>
+              {/* Back button */}
+              <Pressable
+                onPress={() => {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace("/home" as any);
+                  }
+                }}
+                className="mr-3 h-10 w-10 items-center justify-center rounded-full border border-[#E5E3DB] bg-white active:opacity-70"
+                hitSlop={8}
+              >
+                <Ionicons name="chevron-back" size={21} color="#263128" />
+              </Pressable>
 
-            <Pressable
-              onPress={() =>
-                loadData(page, {
-                  showLoader: true,
-                })
-              }
-              className="mt-3 self-start rounded-lg bg-white px-3.5 py-2"
-            >
-              <Text className="text-[10px] font-bold text-[#A74E4E]">
-                Try again
-              </Text>
-            </Pressable>
-          </View>
-        ) : null}
+              {/* Title */}
+              <View className="flex-1">
+                <Text className="text-[27px] font-bold text-[#263128]">
+                  Progress
+                </Text>
 
-        {/* Summary */}
-        <View className="mt-6 rounded-[22px] bg-[#304B36] p-5">
-          <View className="flex-row items-start">
-            <View className="flex-1 pr-3">
-              <Text className="text-[10px] font-bold tracking-[1.2px] text-[#BBD0BA]">
-                WELLNESS SUMMARY
-              </Text>
-
-              <Text className="mt-2 text-[21px] font-bold leading-7 text-white">
-                Your recent check-ins at a glance.
-              </Text>
-
-              <Text className="mt-2 text-[11px] leading-5 text-[#D5E0D4]">
-                {filterLabel} of recorded wellness information.
-              </Text>
-            </View>
-
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/10">
-              <Ionicons name="stats-chart-outline" size={20} color="#DDEBDD" />
-            </View>
-          </View>
-
-          <View className="mt-5 flex-row">
-            <View className="flex-1">
-              <Text className="text-[25px] font-bold text-white">
-                {tracking?.daysTracked ?? 0}
-              </Text>
-              <Text className="mt-1 text-[9px] text-[#BBD0BA]">
-                days tracked
-              </Text>
-            </View>
-
-            <View className="mx-3 h-8 w-px bg-white/15" />
-
-            <View className="flex-1">
-              <Text className="text-[25px] font-bold text-white">
-                {tracking?.averageMood ?? "—"}
-              </Text>
-              <Text className="mt-1 text-[9px] text-[#BBD0BA]">
-                average mood
-              </Text>
-            </View>
-
-            <View className="mx-3 h-8 w-px bg-white/15" />
-
-            <View className="flex-1">
-              <Text className="text-[25px] font-bold text-white">
-                {totalEntries}
-              </Text>
-              <Text className="mt-1 text-[9px] text-[#BBD0BA]">check-ins</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Today */}
-        <View className="mt-7">
-          <View className="mb-3 flex-row items-end justify-between">
-            <View>
-              <Text className="text-[19px] font-bold text-[#263128]">
-                Today
-              </Text>
-              <Text className="mt-1 text-[10px] text-[#8A9088]">
-                {hasTodayEntry
-                  ? "Today's check-in is already recorded."
-                  : "Keep your daily check-in up to date."}
-              </Text>
-            </View>
-
-            {hasTodayEntry ? (
-              <View className="flex-row items-center rounded-full bg-[#EAF1E8] px-3 py-1.5">
-                <Ionicons
-                  name="checkmark-circle"
-                  size={14}
-                  color={COLORS.green}
-                />
-                <Text className="ml-1 text-[10px] font-bold text-[#4D6A50]">
-                  Logged
+                <Text className="mt-0.5 text-[11px] leading-5 text-[#7C827A]">
+                  Your wellness history and daily check-ins.
                 </Text>
               </View>
+
+              {/* Add button */}
+              <Pressable
+                onPress={() => router.push("/progress-create" as any)}
+                className="ml-3 h-11 w-11 items-center justify-center rounded-xl bg-[#304B36] active:opacity-80"
+                hitSlop={6}
+              >
+                <Ionicons name="add" size={23} color="#FFFFFF" />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Search */}
+          <View className="mt-5 flex-row items-center rounded-[18px] border border-[#E5E3DB] bg-white px-4">
+            <Ionicons
+              name="search-outline"
+              size={18}
+              color={COLORS.softMuted}
+            />
+
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search date, activity, note, mood..."
+              placeholderTextColor="#A4A89F"
+              className="h-12 flex-1 px-3 text-[13px] text-[#263128]"
+              returnKeyType="search"
+            />
+
+            {search.length > 0 ? (
+              <Pressable
+                onPress={() => setSearch("")}
+                className="h-7 w-7 items-center justify-center rounded-full bg-[#F1F2ED]"
+              >
+                <Ionicons name="close" size={14} color={COLORS.muted} />
+              </Pressable>
             ) : null}
           </View>
 
-          <Pressable
-            onPress={() => {
-              if (todayEntry?._id) {
-                router.push({
-                  pathname: "/progress-create",
-                  params: {
-                    id: todayEntry._id,
-                  },
-                } as any);
-              } else {
-                router.push("/progress-create" as any);
-              }
-            }}
-            className="rounded-[18px] border border-[#DDE7D9] bg-[#EAF1E8] p-4 active:opacity-80"
-          >
-            <View className="flex-row items-center">
-              <View className="h-10 w-10 items-center justify-center rounded-xl bg-white">
+          {/* Date filter */}
+          <View className="mt-5">
+            <View className="mb-2 flex-row items-center justify-between">
+              <Text className="text-[11px] font-semibold text-[#7C827A]">
+                Time period
+              </Text>
+              <Text className="text-[10px] text-[#A4A89F]">{filterLabel}</Text>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <FilterChip
+                label="7 days"
+                active={dateFilter === "7"}
+                onPress={() => {
+                  setDateFilter("7");
+                  setPage(1);
+                }}
+              />
+              <FilterChip
+                label="30 days"
+                active={dateFilter === "30"}
+                onPress={() => {
+                  setDateFilter("30");
+                  setPage(1);
+                }}
+              />
+              <FilterChip
+                label="90 days"
+                active={dateFilter === "90"}
+                onPress={() => {
+                  setDateFilter("90");
+                  setPage(1);
+                }}
+              />
+              <FilterChip
+                label="All time"
+                active={dateFilter === "all"}
+                onPress={() => {
+                  setDateFilter("all");
+                  setPage(1);
+                }}
+              />
+            </ScrollView>
+          </View>
+
+          {/* Error */}
+          {error ? (
+            <View className="mt-5 rounded-[18px] border border-[#F0D4D4] bg-[#F8EAEA] p-4">
+              <View className="flex-row items-center">
                 <Ionicons
-                  name={hasTodayEntry ? "create-outline" : "add-circle-outline"}
-                  size={21}
-                  color={COLORS.green}
+                  name="alert-circle-outline"
+                  size={18}
+                  color={COLORS.red}
+                />
+                <Text className="ml-2 flex-1 text-[12px] leading-5 text-[#A74E4E]">
+                  {error}
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={() =>
+                  loadData(page, {
+                    showLoader: true,
+                  })
+                }
+                className="mt-3 self-start rounded-lg bg-white px-3.5 py-2"
+              >
+                <Text className="text-[10px] font-bold text-[#A74E4E]">
+                  Try again
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
+
+          {/* Summary */}
+          <View className="mt-6 rounded-[22px] bg-[#304B36] p-5">
+            <View className="flex-row items-start">
+              <View className="flex-1 pr-3">
+                <Text className="text-[10px] font-bold tracking-[1.2px] text-[#BBD0BA]">
+                  WELLNESS SUMMARY
+                </Text>
+
+                <Text className="mt-2 text-[21px] font-bold leading-7 text-white">
+                  Your recent check-ins at a glance.
+                </Text>
+
+                <Text className="mt-2 text-[11px] leading-5 text-[#D5E0D4]">
+                  {filterLabel} of recorded wellness information.
+                </Text>
+              </View>
+
+              <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+                <Ionicons
+                  name="stats-chart-outline"
+                  size={20}
+                  color="#DDEBDD"
                 />
               </View>
+            </View>
 
-              <View className="ml-3 flex-1">
-                <Text className="text-[13px] font-bold text-[#263128]">
-                  {hasTodayEntry
-                    ? "Update today's progress"
-                    : "Record today's progress"}
+            <View className="mt-5 flex-row">
+              <View className="flex-1">
+                <Text className="text-[25px] font-bold text-white">
+                  {tracking?.daysTracked ?? 0}
                 </Text>
-                <Text className="mt-1 text-[10px] leading-4 text-[#6F766E]">
-                  Mood, sleep, movement and daily habits.
+                <Text className="mt-1 text-[9px] text-[#BBD0BA]">
+                  days tracked
                 </Text>
               </View>
 
-              <Ionicons name="chevron-forward" size={17} color={COLORS.muted} />
+              <View className="mx-3 h-8 w-px bg-white/15" />
+
+              <View className="flex-1">
+                <Text className="text-[25px] font-bold text-white">
+                  {tracking?.averageMood ?? "—"}
+                </Text>
+                <Text className="mt-1 text-[9px] text-[#BBD0BA]">
+                  average mood
+                </Text>
+              </View>
+
+              <View className="mx-3 h-8 w-px bg-white/15" />
+
+              <View className="flex-1">
+                <Text className="text-[25px] font-bold text-white">
+                  {totalEntries}
+                </Text>
+                <Text className="mt-1 text-[9px] text-[#BBD0BA]">
+                  check-ins
+                </Text>
+              </View>
             </View>
-          </Pressable>
-        </View>
-
-        {/* Wellness overview */}
-        <View className="mt-7">
-          <View className="mb-3">
-            <Text className="text-[19px] font-bold text-[#263128]">
-              Wellness overview
-            </Text>
-            <Text className="mt-1 text-[10px] text-[#8A9088]">
-              Averages and totals for {filterLabel.toLowerCase()}.
-            </Text>
           </View>
 
-          <View className="flex-row flex-wrap justify-between gap-y-3">
-            <MetricCard
-              icon="moon-outline"
-              label="Average sleep"
-              value={
-                tracking?.averageSleepHours !== null &&
-                tracking?.averageSleepHours !== undefined
-                  ? String(tracking.averageSleepHours)
-                  : "—"
-              }
-              unit="hrs"
-            />
-
-            <MetricCard
-              icon="water-outline"
-              label="Water intake"
-              value={
-                tracking?.averageWaterIntakeLiters !== null &&
-                tracking?.averageWaterIntakeLiters !== undefined
-                  ? String(tracking.averageWaterIntakeLiters)
-                  : "—"
-              }
-              unit="L"
-            />
-
-            <MetricCard
-              icon="walk-outline"
-              label="Average steps"
-              value={
-                tracking?.averageSteps !== null &&
-                tracking?.averageSteps !== undefined
-                  ? Math.round(tracking.averageSteps).toLocaleString()
-                  : "—"
-              }
-            />
-
-            <MetricCard
-              icon="fitness-outline"
-              label="Exercise"
-              value={formatMinutes(tracking?.totalExerciseMinutes ?? 0)}
-            />
-
-            <MetricCard
-              icon="body-outline"
-              label="Yoga"
-              value={formatMinutes(tracking?.totalYogaMinutes ?? 0)}
-            />
-
-            <MetricCard
-              icon="leaf-outline"
-              label="Meditation"
-              value={formatMinutes(tracking?.totalMeditationMinutes ?? 0)}
-            />
-          </View>
-        </View>
-
-        {/* Feelings */}
-        <View className="mt-7 rounded-[22px] border border-[#E5E3DB] bg-white p-5">
-          <Text className="text-[18px] font-bold text-[#263128]">
-            Wellbeing ratings
-          </Text>
-          <Text className="mb-5 mt-1 text-[10px] text-[#8A9088]">
-            Average ratings during {filterLabel.toLowerCase()}.
-          </Text>
-
-          <RatingBar
-            label="Mood"
-            value={tracking?.averageMood ?? null}
-            icon="happy-outline"
-          />
-          <RatingBar
-            label="Energy"
-            value={tracking?.averageEnergyLevel ?? null}
-            icon="flash-outline"
-          />
-          <RatingBar
-            label="Stress"
-            value={tracking?.averageStressLevel ?? null}
-            icon="pulse-outline"
-          />
-          <RatingBar
-            label="Sleep quality"
-            value={tracking?.averageSleepQuality ?? null}
-            icon="moon-outline"
-          />
-        </View>
-
-        {/* Goals */}
-        {summary?.goals?.length ? (
+          {/* Today */}
           <View className="mt-7">
             <View className="mb-3 flex-row items-end justify-between">
               <View>
                 <Text className="text-[19px] font-bold text-[#263128]">
-                  Active goals
+                  Today
                 </Text>
                 <Text className="mt-1 text-[10px] text-[#8A9088]">
-                  Current progress from your goals.
+                  {hasTodayEntry
+                    ? "Today's check-in is already recorded."
+                    : "Keep your daily check-in up to date."}
                 </Text>
               </View>
 
-              <Pressable onPress={() => router.push("/goals" as any)}>
-                <Text className="text-[11px] font-bold text-[#4D6A50]">
-                  View all
-                </Text>
-              </Pressable>
-            </View>
-
-            {summary.goals.slice(0, 3).map((goal) => (
-              <View
-                key={goal.id}
-                className="mb-3 rounded-[18px] border border-[#E5E3DB] bg-white p-4"
-              >
-                <View className="flex-row items-center justify-between">
-                  <Text
-                    numberOfLines={1}
-                    className="flex-1 pr-4 text-[13px] font-bold text-[#263128]"
-                  >
-                    {goal.title}
-                  </Text>
-                  <Text className="text-[12px] font-bold text-[#4D6A50]">
-                    {goal.progressPercentage}%
+              {hasTodayEntry ? (
+                <View className="flex-row items-center rounded-full bg-[#EAF1E8] px-3 py-1.5">
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={14}
+                    color={COLORS.green}
+                  />
+                  <Text className="ml-1 text-[10px] font-bold text-[#4D6A50]">
+                    Logged
                   </Text>
                 </View>
+              ) : null}
+            </View>
 
-                <View className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EEF0EB]">
-                  <View
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${Math.min(goal.progressPercentage, 100)}%`,
-                      backgroundColor: COLORS.green,
-                    }}
+            <Pressable
+              onPress={() => {
+                if (todayEntry?._id) {
+                  router.push({
+                    pathname: "/progress-create",
+                    params: {
+                      id: todayEntry._id,
+                    },
+                  } as any);
+                } else {
+                  router.push("/progress-create" as any);
+                }
+              }}
+              className="rounded-[18px] border border-[#DDE7D9] bg-[#EAF1E8] p-4 active:opacity-80"
+            >
+              <View className="flex-row items-center">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-white">
+                  <Ionicons
+                    name={
+                      hasTodayEntry ? "create-outline" : "add-circle-outline"
+                    }
+                    size={21}
+                    color={COLORS.green}
                   />
                 </View>
+
+                <View className="ml-3 flex-1">
+                  <Text className="text-[13px] font-bold text-[#263128]">
+                    {hasTodayEntry
+                      ? "Update today's progress"
+                      : "Record today's progress"}
+                  </Text>
+                  <Text className="mt-1 text-[10px] leading-4 text-[#6F766E]">
+                    Mood, sleep, movement and daily habits.
+                  </Text>
+                </View>
+
+                <Ionicons
+                  name="chevron-forward"
+                  size={17}
+                  color={COLORS.muted}
+                />
               </View>
-            ))}
-          </View>
-        ) : null}
-
-        {/* Check-ins */}
-        <View className="mt-7">
-          <View className="mb-3">
-            <Text className="text-[19px] font-bold text-[#263128]">
-              Check-ins
-            </Text>
-            <Text className="mt-1 text-[10px] text-[#8A9088]">
-              {search.trim()
-                ? `Showing matches in the current page`
-                : `${totalEntries} ${
-                    totalEntries === 1 ? "check-in" : "check-ins"
-                  } in ${filterLabel.toLowerCase()}`}
-            </Text>
-          </View>
-
-          {/* Quick filters */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mb-3"
-          >
-            <FilterChip
-              label="All"
-              active={quickFilter === "all"}
-              onPress={() => setQuickFilter("all")}
-            />
-            <FilterChip
-              label="Activities"
-              active={quickFilter === "activity"}
-              onPress={() => setQuickFilter("activity")}
-            />
-            <FilterChip
-              label="Notes"
-              active={quickFilter === "notes"}
-              onPress={() => setQuickFilter("notes")}
-            />
-            <FilterChip
-              label="Mood / energy"
-              active={quickFilter === "wellness"}
-              onPress={() => setQuickFilter("wellness")}
-            />
-          </ScrollView>
-
-          {filteredHistory.length === 0 ? (
-            <EmptyHistory
-              searchActive={Boolean(search.trim()) || quickFilter !== "all"}
-              onAdd={() => router.push("/progress-create" as any)}
-            />
-          ) : (
-            filteredHistory.map((entry) => (
-              <HistoryItem
-                key={entry._id}
-                entry={entry}
-                onPress={() =>
-                  router.push({
-                    pathname: "/progress/[id]",
-                    params: {
-                      id: entry._id,
-                    },
-                  })
-                }
-              />
-            ))
-          )}
-        </View>
-
-        {/* Pagination */}
-        {totalPages > 1 ? (
-          <View className="mt-2 flex-row items-center justify-between rounded-[18px] border border-[#E5E3DB] bg-white px-3 py-3">
-            <Pressable
-              disabled={page <= 1 || loading}
-              onPress={() => {
-                if (page > 1) {
-                  setPage((current) => current - 1);
-                }
-              }}
-              className="h-9 w-9 items-center justify-center rounded-xl"
-              style={{
-                backgroundColor: page <= 1 ? "#F3F3EE" : COLORS.lightGreen,
-                opacity: page <= 1 ? 0.45 : 1,
-              }}
-            >
-              <Ionicons name="chevron-back" size={16} color={COLORS.green} />
             </Pressable>
+          </View>
 
-            <View className="items-center">
-              <Text className="text-[11px] font-bold text-[#263128]">
-                Page {page} of {totalPages}
+          {/* Wellness overview */}
+          <View className="mt-7">
+            <View className="mb-3">
+              <Text className="text-[19px] font-bold text-[#263128]">
+                Wellness overview
               </Text>
-              <Text className="mt-0.5 text-[9px] text-[#A4A89F]">
-                {totalEntries} total check-ins
+              <Text className="mt-1 text-[10px] text-[#8A9088]">
+                Averages and totals for {filterLabel.toLowerCase()}.
               </Text>
             </View>
 
-            <Pressable
-              disabled={page >= totalPages || loading}
-              onPress={() => {
-                if (page < totalPages) {
-                  setPage((current) => current + 1);
+            <View className="flex-row flex-wrap justify-between gap-y-3">
+              <MetricCard
+                icon="moon-outline"
+                label="Average sleep"
+                value={
+                  tracking?.averageSleepHours !== null &&
+                  tracking?.averageSleepHours !== undefined
+                    ? String(tracking.averageSleepHours)
+                    : "—"
                 }
-              }}
-              className="h-9 w-9 items-center justify-center rounded-xl"
-              style={{
-                backgroundColor:
-                  page >= totalPages ? "#F3F3EE" : COLORS.lightGreen,
-                opacity: page >= totalPages ? 0.45 : 1,
-              }}
-            >
-              <Ionicons name="chevron-forward" size={16} color={COLORS.green} />
-            </Pressable>
-          </View>
-        ) : null}
+                unit="hrs"
+              />
 
-        <View className="mt-6 items-center">
-          <Text className="text-[9px] text-[#A4A89F]">
-            Pull down anytime to refresh your progress.
-          </Text>
-        </View>
-      </ScrollView>
+              <MetricCard
+                icon="water-outline"
+                label="Water intake"
+                value={
+                  tracking?.averageWaterIntakeLiters !== null &&
+                  tracking?.averageWaterIntakeLiters !== undefined
+                    ? String(tracking.averageWaterIntakeLiters)
+                    : "—"
+                }
+                unit="L"
+              />
+
+              <MetricCard
+                icon="walk-outline"
+                label="Average steps"
+                value={
+                  tracking?.averageSteps !== null &&
+                  tracking?.averageSteps !== undefined
+                    ? Math.round(tracking.averageSteps).toLocaleString()
+                    : "—"
+                }
+              />
+
+              <MetricCard
+                icon="fitness-outline"
+                label="Exercise"
+                value={formatMinutes(tracking?.totalExerciseMinutes ?? 0)}
+              />
+
+              <MetricCard
+                icon="body-outline"
+                label="Yoga"
+                value={formatMinutes(tracking?.totalYogaMinutes ?? 0)}
+              />
+
+              <MetricCard
+                icon="leaf-outline"
+                label="Meditation"
+                value={formatMinutes(tracking?.totalMeditationMinutes ?? 0)}
+              />
+            </View>
+          </View>
+
+          {/* Feelings */}
+          <View className="mt-7 rounded-[22px] border border-[#E5E3DB] bg-white p-5">
+            <Text className="text-[18px] font-bold text-[#263128]">
+              Wellbeing ratings
+            </Text>
+            <Text className="mb-5 mt-1 text-[10px] text-[#8A9088]">
+              Average ratings during {filterLabel.toLowerCase()}.
+            </Text>
+
+            <RatingBar
+              label="Mood"
+              value={tracking?.averageMood ?? null}
+              icon="happy-outline"
+            />
+            <RatingBar
+              label="Energy"
+              value={tracking?.averageEnergyLevel ?? null}
+              icon="flash-outline"
+            />
+            <RatingBar
+              label="Stress"
+              value={tracking?.averageStressLevel ?? null}
+              icon="pulse-outline"
+            />
+            <RatingBar
+              label="Sleep quality"
+              value={tracking?.averageSleepQuality ?? null}
+              icon="moon-outline"
+            />
+          </View>
+
+          {/* Goals */}
+          {summary?.goals?.length ? (
+            <View className="mt-7">
+              <View className="mb-3 flex-row items-end justify-between">
+                <View>
+                  <Text className="text-[19px] font-bold text-[#263128]">
+                    Active goals
+                  </Text>
+                  <Text className="mt-1 text-[10px] text-[#8A9088]">
+                    Current progress from your goals.
+                  </Text>
+                </View>
+
+                <Pressable onPress={() => router.push("/goals" as any)}>
+                  <Text className="text-[11px] font-bold text-[#4D6A50]">
+                    View all
+                  </Text>
+                </Pressable>
+              </View>
+
+              {summary.goals.slice(0, 3).map((goal) => (
+                <View
+                  key={goal.id}
+                  className="mb-3 rounded-[18px] border border-[#E5E3DB] bg-white p-4"
+                >
+                  <View className="flex-row items-center justify-between">
+                    <Text
+                      numberOfLines={1}
+                      className="flex-1 pr-4 text-[13px] font-bold text-[#263128]"
+                    >
+                      {goal.title}
+                    </Text>
+                    <Text className="text-[12px] font-bold text-[#4D6A50]">
+                      {goal.progressPercentage}%
+                    </Text>
+                  </View>
+
+                  <View className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#EEF0EB]">
+                    <View
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(goal.progressPercentage, 100)}%`,
+                        backgroundColor: COLORS.green,
+                      }}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {/* Check-ins */}
+          <View className="mt-7">
+            <View className="mb-3">
+              <Text className="text-[19px] font-bold text-[#263128]">
+                Check-ins
+              </Text>
+              <Text className="mt-1 text-[10px] text-[#8A9088]">
+                {search.trim()
+                  ? `Showing matches in the current page`
+                  : `${totalEntries} ${
+                      totalEntries === 1 ? "check-in" : "check-ins"
+                    } in ${filterLabel.toLowerCase()}`}
+              </Text>
+            </View>
+
+            {/* Quick filters */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="mb-3"
+            >
+              <FilterChip
+                label="All"
+                active={quickFilter === "all"}
+                onPress={() => setQuickFilter("all")}
+              />
+              <FilterChip
+                label="Activities"
+                active={quickFilter === "activity"}
+                onPress={() => setQuickFilter("activity")}
+              />
+              <FilterChip
+                label="Notes"
+                active={quickFilter === "notes"}
+                onPress={() => setQuickFilter("notes")}
+              />
+              <FilterChip
+                label="Mood / energy"
+                active={quickFilter === "wellness"}
+                onPress={() => setQuickFilter("wellness")}
+              />
+            </ScrollView>
+
+            {filteredHistory.length === 0 ? (
+              <EmptyHistory
+                searchActive={Boolean(search.trim()) || quickFilter !== "all"}
+                onAdd={() => router.push("/progress-create" as any)}
+              />
+            ) : (
+              filteredHistory.map((entry) => (
+                <HistoryItem
+                  key={entry._id}
+                  entry={entry}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/progress/[id]",
+                      params: {
+                        id: entry._id,
+                      },
+                    })
+                  }
+                />
+              ))
+            )}
+          </View>
+
+          {/* Pagination */}
+          {totalPages > 1 ? (
+            <View className="mt-2 flex-row items-center justify-between rounded-[18px] border border-[#E5E3DB] bg-white px-3 py-3">
+              <Pressable
+                disabled={page <= 1 || loading}
+                onPress={() => {
+                  if (page > 1) {
+                    setPage((current) => current - 1);
+                  }
+                }}
+                className="h-9 w-9 items-center justify-center rounded-xl"
+                style={{
+                  backgroundColor: page <= 1 ? "#F3F3EE" : COLORS.lightGreen,
+                  opacity: page <= 1 ? 0.45 : 1,
+                }}
+              >
+                <Ionicons name="chevron-back" size={16} color={COLORS.green} />
+              </Pressable>
+
+              <View className="items-center">
+                <Text className="text-[11px] font-bold text-[#263128]">
+                  Page {page} of {totalPages}
+                </Text>
+                <Text className="mt-0.5 text-[9px] text-[#A4A89F]">
+                  {totalEntries} total check-ins
+                </Text>
+              </View>
+
+              <Pressable
+                disabled={page >= totalPages || loading}
+                onPress={() => {
+                  if (page < totalPages) {
+                    setPage((current) => current + 1);
+                  }
+                }}
+                className="h-9 w-9 items-center justify-center rounded-xl"
+                style={{
+                  backgroundColor:
+                    page >= totalPages ? "#F3F3EE" : COLORS.lightGreen,
+                  opacity: page >= totalPages ? 0.45 : 1,
+                }}
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={COLORS.green}
+                />
+              </Pressable>
+            </View>
+          ) : null}
+
+          <View className="mt-6 items-center">
+            <Text className="text-[9px] text-[#A4A89F]">
+              Pull down anytime to refresh your progress.
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
