@@ -7,12 +7,10 @@
     "icon": "./assets/images/main-app-icon.png",
     "scheme": "niramaya",
     "userInterfaceStyle": "automatic",
-
     "ios": {
       "buildNumber": "1",
       "icon": "./assets/expo.icon"
     },
-
     "android": {
       "versionCode": 1,
       "adaptiveIcon": {
@@ -21,14 +19,13 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.satinder_singh_sall.niramaya"
     },
-
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -42,10 +39,15 @@
       "expo-secure-store",
       "@react-native-community/datetimepicker"
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e5f80bb1-37bf-442d-aef5-13eecd4f9eb9"
+      }
     }
   }
 }
