@@ -19,6 +19,8 @@ import { router, useFocusEffect } from "expo-router";
 
 import { Ionicons } from "@expo/vector-icons";
 
+import { API_BASE_URL } from "@/services/api";
+
 import {
   getAyurvedaCategories,
   getFeaturedAyurveda,
@@ -503,6 +505,20 @@ function CategoryRow({
   );
 }
 
+function getExploreImageUrl(value?: string | null) {
+  if (!value) return value;
+
+  const url = String(value).trim();
+
+  if (!url) return value;
+
+  if (url.includes("commons.wikimedia.org/wiki/Special:FilePath/")) {
+    return `${API_BASE_URL}/yoga/image?url=${encodeURIComponent(url)}`;
+  }
+
+  return url;
+}
+
 /* ========================================================================== */
 /* CONTENT ROW                                                                */
 /* ========================================================================== */
@@ -555,7 +571,14 @@ function ContentRow({
         return (
           <ExploreContentCard
             key={`${type}-${itemId}-${index}`}
-            item={item}
+            item={{
+              ...item,
+              imageUrl: getExploreImageUrl(
+                item.imageUrl ||
+                  (item as any).image ||
+                  (item as any).thumbnailUrl,
+              ),
+            }}
             type={type}
             compact
             onPress={() => onPress(itemId)}

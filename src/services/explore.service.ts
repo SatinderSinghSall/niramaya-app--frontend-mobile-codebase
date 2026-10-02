@@ -74,17 +74,65 @@ export async function getRecommendations(
 /* Yoga                                                                       */
 /* -------------------------------------------------------------------------- */
 
-export async function getYoga(params?: {
+export interface YogaListParams {
+  search?: string;
   category?: string;
+  type?: string;
   difficulty?: string;
+  featured?: boolean;
   page?: number;
   limit?: number;
-}): Promise<ExploreItem[]> {
+}
+
+export interface YogaPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface YogaListResult {
+  items: ExploreItem[];
+  pagination: YogaPagination;
+}
+
+export async function getYoga(params?: YogaListParams): Promise<ExploreItem[]> {
   const response = await api.get("/yoga", {
     params,
   });
 
   return extractItems(getPayload(response));
+}
+
+export async function getYogaPage(
+  params?: YogaListParams,
+): Promise<YogaListResult> {
+  const response = await api.get("/yoga", {
+    params,
+  });
+
+  const payload = getPayload(response);
+
+  const items = extractItems(payload);
+
+  return {
+    items,
+    pagination: {
+      page: Number(payload?.pagination?.page ?? params?.page ?? 1),
+      limit: Number(payload?.pagination?.limit ?? params?.limit ?? 10),
+      total: Number(payload?.pagination?.total ?? items.length),
+      totalPages: Number(
+        payload?.pagination?.totalPages ??
+          Math.max(
+            1,
+            Math.ceil(
+              Number(payload?.pagination?.total ?? items.length) /
+                Number(payload?.pagination?.limit ?? params?.limit ?? 10),
+            ),
+          ),
+      ),
+    },
+  };
 }
 
 export async function getYogaCategories(): Promise<CategoryItem[]> {
@@ -96,7 +144,7 @@ export async function getYogaCategories(): Promise<CategoryItem[]> {
     return payload;
   }
 
-  return payload?.categories ?? [];
+  return Array.isArray(payload?.categories) ? payload.categories : [];
 }
 
 export async function getFeaturedYoga(): Promise<ExploreItem[]> {
@@ -105,21 +153,83 @@ export async function getFeaturedYoga(): Promise<ExploreItem[]> {
   return extractItems(getPayload(response));
 }
 
+export async function incrementYogaViewCount(
+  id: string,
+): Promise<number | null> {
+  const response = await api.post(`/yoga/${id}/view`);
+
+  const payload = getPayload(response);
+
+  return typeof payload?.viewCount === "number" ? payload.viewCount : null;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Ayurveda                                                                   */
 /* -------------------------------------------------------------------------- */
 
-export async function getAyurveda(params?: {
+export interface AyurvedaListParams {
+  search?: string;
   category?: string;
-  ayurvedaType?: string;
+  type?: string;
+  difficulty?: string;
+  dosha?: string;
+  featured?: boolean;
   page?: number;
   limit?: number;
-}): Promise<ExploreItem[]> {
+}
+
+export interface AyurvedaPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface AyurvedaListResult {
+  items: ExploreItem[];
+  pagination: AyurvedaPagination;
+}
+
+export async function getAyurveda(
+  params?: AyurvedaListParams,
+): Promise<ExploreItem[]> {
   const response = await api.get("/ayurveda", {
     params,
   });
 
   return extractItems(getPayload(response));
+}
+
+export async function getAyurvedaPage(
+  params?: AyurvedaListParams,
+): Promise<AyurvedaListResult> {
+  const response = await api.get("/ayurveda", {
+    params,
+  });
+
+  const payload = getPayload(response);
+
+  const items = extractItems(payload);
+
+  const page = Number(payload?.pagination?.page ?? params?.page ?? 1);
+
+  const limit = Number(payload?.pagination?.limit ?? params?.limit ?? 10);
+
+  const total = Number(payload?.pagination?.total ?? items.length);
+
+  const totalPages = Number(
+    payload?.pagination?.totalPages ?? Math.max(1, Math.ceil(total / limit)),
+  );
+
+  return {
+    items,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
 }
 
 export async function getAyurvedaCategories(): Promise<CategoryItem[]> {
@@ -131,13 +241,36 @@ export async function getAyurvedaCategories(): Promise<CategoryItem[]> {
     return payload;
   }
 
-  return payload?.categories ?? [];
+  return Array.isArray(payload?.categories) ? payload.categories : [];
 }
 
 export async function getFeaturedAyurveda(): Promise<ExploreItem[]> {
   const response = await api.get("/ayurveda/featured");
 
   return extractItems(getPayload(response));
+}
+
+export async function getAyurvedaRecommendations(
+  limit = 10,
+): Promise<RecommendationItem[]> {
+  return getRecommendations("ayurveda", limit);
+}
+
+export async function incrementAyurvedaViewCount(
+  id: string,
+): Promise<number | null> {
+  const response = await api.post(`/ayurveda/${id}/view`);
+
+  const payload = getPayload(response);
+
+  return typeof payload?.viewCount === "number" ? payload.viewCount : null;
+}
+
+export async function getAyurvedaById(id: string): Promise<ExploreItem> {
+  const response = await api.get(`/ayurveda/${id}`);
+  const payload = getPayload(response);
+
+  return (payload?.item ?? payload?.ayurveda ?? payload) as ExploreItem;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -187,40 +320,12 @@ export async function getFavorites(): Promise<ExploreItem[]> {
 
   const payload = getPayload(response);
 
-  /*
-   * Backend response:
-   *
-   * {
-   *   favorites: [
-   *     {
-   *       _id: "...",
-   *       itemType: "yoga",
-   *       item: "...",
-   *       itemData: {
-   *         _id: "...",
-   *         title: "...",
-   *         ...
-   *       }
-   *     }
-   *   ],
-   *   pagination: {...}
-   * }
-   */
-
   const favorites = Array.isArray(payload?.favorites) ? payload.favorites : [];
 
   return favorites
     .filter((favorite: any) => favorite?.itemData)
     .map((favorite: any) => ({
       ...favorite.itemData,
-
-      /*
-       * Preserve the actual favorite type.
-       *
-       * We use resultType in the frontend so that
-       * Ayurveda items cannot accidentally be treated
-       * as Yoga.
-       */
       resultType: favorite.itemType,
     }));
 }

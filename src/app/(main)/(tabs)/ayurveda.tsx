@@ -17,9 +17,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Ionicons } from "@expo/vector-icons";
 
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 
-import { getAyurveda, getAyurvedaCategories } from "@/services/explore.service";
+import {
+  getAyurvedaCategories,
+  getAyurvedaPage,
+} from "@/services/explore.service";
 
 import { CategoryItem, ExploreItem } from "@/types/explore";
 
@@ -660,6 +663,8 @@ function AyurvedaEmptyState({ searched }: { searched: boolean }) {
 /* -------------------------------------------------------------------------- */
 
 export default function AyurvedaScreen() {
+  const PAGE_SIZE = 8;
+
   const [items, setItems] = useState<ExploreItem[]>([]);
 
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -668,21 +673,26 @@ export default function AyurvedaScreen() {
 
   const [search, setSearch] = useState("");
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
   const [loading, setLoading] = useState(true);
-
   const [refreshing, setRefreshing] = useState(false);
-
   const [error, setError] = useState("");
   const [retrying, setRetrying] = useState(false);
 
   /* ------------------------------------------------------------------------ */
-
   /* Load Ayurveda                                                             */
-
   /* ------------------------------------------------------------------------ */
 
   const loadAyurveda = useCallback(
-    async (category = selectedCategory, showLoader = false) => {
+    async (
+      targetPage = 1,
+      category = selectedCategory,
+      query = search,
+      showLoader = false,
+    ) => {
       try {
         if (showLoader) {
           setLoading(true);
@@ -690,24 +700,23 @@ export default function AyurvedaScreen() {
 
         setError("");
 
-        const [ayurvedaData, categoryData] = await Promise.all([
-          getAyurveda({
+        const [ayurvedaResult, categoryData] = await Promise.all([
+          getAyurvedaPage({
             category: category || undefined,
-
-            page: 1,
-
-            limit: 30,
+            search: query.trim() || undefined,
+            page: targetPage,
+            limit: PAGE_SIZE,
           }),
-
           getAyurvedaCategories(),
         ]);
 
-        setItems(ayurvedaData);
-
+        setItems(ayurvedaResult.items);
+        setPage(ayurvedaResult.pagination.page);
+        setTotalPages(ayurvedaResult.pagination.totalPages);
+        setTotalItems(ayurvedaResult.pagination.total);
         setCategories(categoryData);
       } catch (err: any) {
         console.error("Ayurveda loading error:", err);
-
         setError(
           err?.response?.data?.message ||
             err?.message ||
@@ -715,62 +724,57 @@ export default function AyurvedaScreen() {
         );
       } finally {
         setLoading(false);
-
         setRefreshing(false);
+        setRetrying(false);
       }
     },
-
-    [selectedCategory],
+    [selectedCategory, search],
   );
 
   /* ------------------------------------------------------------------------ */
-
-  /* Initial Load                                                              */
-
+  /* Initial Load + Server Search/Filter                                      */
   /* ------------------------------------------------------------------------ */
 
   useEffect(() => {
-    loadAyurveda(selectedCategory, true);
-  }, []);
+    const timer = setTimeout(
+      () => {
+        loadAyurveda(1, selectedCategory, search, true);
+      },
+      search ? 350 : 0,
+    );
+
+    return () => clearTimeout(timer);
+  }, [selectedCategory, search, loadAyurveda]);
 
   /* ------------------------------------------------------------------------ */
-
-  /* Refresh on Focus                                                          */
-
-  /* ------------------------------------------------------------------------ */
-
-  useFocusEffect(
-    useCallback(() => {
-      loadAyurveda(selectedCategory, false);
-
-      return undefined;
-    }, [loadAyurveda, selectedCategory]),
-  );
-
-  /* ------------------------------------------------------------------------ */
-
   /* Category Handling                                                         */
-
   /* ------------------------------------------------------------------------ */
 
-  const handleCategory = async (value: string | null) => {
+  const handleCategory = (value: string | null) => {
     setSelectedCategory(value);
-
-    setSearch("");
-
-    await loadAyurveda(value, true);
+    setPage(1);
   };
 
   /* ------------------------------------------------------------------------ */
-
-  /* Pull Refresh                                                              */
-
+  /* Pagination                                                                */
   /* ------------------------------------------------------------------------ */
+
+  const handlePageChange = async (nextPage: number) => {
+    if (nextPage < 1 || nextPage > totalPages || nextPage === page) {
+      return;
+    }
+
+    await loadAyurveda(nextPage, selectedCategory, search, false);
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
+    await loadAyurveda(1, selectedCategory, search, false);
+  };
 
-    await loadAyurveda(selectedCategory, false);
+  const handleRetry = async () => {
+    setRetrying(true);
+    await loadAyurveda(page || 1, selectedCategory, search, true);
   };
 
   /* ------------------------------------------------------------------------ */
@@ -838,31 +842,7 @@ export default function AyurvedaScreen() {
 
   /* ------------------------------------------------------------------------ */
 
-  const filteredItems = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    if (!query) {
-      return items;
-    }
-
-    return items.filter((item) => {
-      const title = item.title || item.name || "";
-
-      const description = item.description || "";
-
-      const category = item.category || "";
-
-      const difficulty = item.difficulty || "";
-
-      const searchableText = [title, description, category, difficulty]
-
-        .join(" ")
-
-        .toLowerCase();
-
-      return searchableText.includes(query);
-    });
-  }, [items, search]);
+  const filteredItems = items;
 
   /* ------------------------------------------------------------------------ */
 
@@ -1037,11 +1017,11 @@ export default function AyurvedaScreen() {
                   }}
                 >
                   {search
-                    ? `${filteredItems.length} ${
-                        filteredItems.length === 1 ? "practice" : "practices"
+                    ? `${totalItems} ${
+                        totalItems === 1 ? "practice" : "practices"
                       } found`
-                    : `${filteredItems.length} ${
-                        filteredItems.length === 1 ? "item" : "items"
+                    : `${totalItems} ${
+                        totalItems === 1 ? "item" : "items"
                       } available`}
                 </Text>
               </View>
@@ -1058,7 +1038,7 @@ export default function AyurvedaScreen() {
                     color: COLORS.green,
                   }}
                 >
-                  {filteredItems.length}
+                  {totalItems}
                 </Text>
               </View>
             </View>
@@ -1119,6 +1099,106 @@ export default function AyurvedaScreen() {
               </View>
             )}
           </View>
+
+          {/* Pagination */}
+
+          {totalPages > 1 && filteredItems.length > 0 ? (
+            <View className="mt-6 items-center">
+              <View className="flex-row items-center">
+                <TouchableOpacity
+                  onPress={() => handlePageChange(page - 1)}
+                  disabled={page <= 1}
+                  activeOpacity={0.8}
+                  className="h-9 w-9 items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor: page <= 1 ? "#EEEAE2" : COLORS.surface,
+                    borderWidth: 1,
+                    borderColor: COLORS.border,
+                    opacity: page <= 1 ? 0.55 : 1,
+                  }}
+                >
+                  <Ionicons
+                    name="chevron-back"
+                    size={15}
+                    color={page <= 1 ? COLORS.softMuted : COLORS.text}
+                  />
+                </TouchableOpacity>
+
+                <View className="mx-3 flex-row items-center">
+                  {Array.from(
+                    { length: Math.min(totalPages, 5) },
+                    (_, index) => {
+                      let pageNumber = index + 1;
+
+                      if (totalPages > 5) {
+                        if (page <= 3) {
+                          pageNumber = index + 1;
+                        } else if (page >= totalPages - 2) {
+                          pageNumber = totalPages - 4 + index;
+                        } else {
+                          pageNumber = page - 2 + index;
+                        }
+                      }
+
+                      const selected = pageNumber === page;
+
+                      return (
+                        <TouchableOpacity
+                          key={pageNumber}
+                          onPress={() => handlePageChange(pageNumber)}
+                          activeOpacity={0.8}
+                          className="mx-1 h-9 min-w-9 items-center justify-center rounded-full px-2"
+                          style={{
+                            backgroundColor: selected
+                              ? COLORS.green
+                              : COLORS.surface,
+                            borderWidth: selected ? 0 : 1,
+                            borderColor: COLORS.border,
+                          }}
+                        >
+                          <Text
+                            className="text-[11px] font-semibold"
+                            style={{
+                              color: selected ? "#FFFFFF" : COLORS.muted,
+                            }}
+                          >
+                            {pageNumber}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    },
+                  )}
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => handlePageChange(page + 1)}
+                  disabled={page >= totalPages}
+                  activeOpacity={0.8}
+                  className="h-9 w-9 items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor:
+                      page >= totalPages ? "#EEEAE2" : COLORS.surface,
+                    borderWidth: 1,
+                    borderColor: COLORS.border,
+                    opacity: page >= totalPages ? 0.55 : 1,
+                  }}
+                >
+                  <Ionicons
+                    name="chevron-forward"
+                    size={15}
+                    color={page >= totalPages ? COLORS.softMuted : COLORS.text}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <Text
+                className="mt-2 text-[10px]"
+                style={{ color: COLORS.softMuted }}
+              >
+                Page {page} of {totalPages}
+              </Text>
+            </View>
+          ) : null}
 
           {/* Calm Visuals */}
 

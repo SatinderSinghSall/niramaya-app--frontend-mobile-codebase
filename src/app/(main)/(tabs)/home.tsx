@@ -16,6 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { getDashboard } from "@/services/dashboard.service";
 
+import { API_BASE_URL } from "@/services/api";
+
 import {
   getFeaturedAyurveda,
   getFeaturedYoga,
@@ -147,15 +149,31 @@ function getItemCategory(item: HomeContentItem) {
 }
 
 function getItemImage(item: HomeContentItem, fallback: string) {
-  return (
+  const value =
     item?.imageUrl ||
     item?.image ||
     item?.thumbnailUrl ||
     item?.thumbnail ||
     item?.coverImage ||
     item?.featuredImage ||
-    fallback
-  );
+    fallback;
+
+  if (!value) {
+    return fallback;
+  }
+
+  const url = String(value).trim();
+
+  if (!url) {
+    return fallback;
+  }
+
+  // Android-safe Wikimedia Commons image proxy
+  if (url.includes("commons.wikimedia.org/wiki/Special:FilePath/")) {
+    return `${API_BASE_URL}/yoga/image?url=${encodeURIComponent(url)}`;
+  }
+
+  return url;
 }
 
 /* ==========================================================================
