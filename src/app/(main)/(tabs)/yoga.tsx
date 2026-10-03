@@ -421,6 +421,7 @@ function YogaRecommendationCard({
   onPress: () => void;
 }) {
   const data = item as RecommendationItem & {
+    id?: string;
     _id?: string;
     title?: string;
     name?: string;
@@ -590,7 +591,7 @@ function YogaForYou({
       >
         {recommendations.map((item) => (
           <YogaRecommendationCard
-            key={item._id}
+            key={item.id || item._id}
             item={item}
             onPress={() => onPress(item)}
           />
@@ -1509,7 +1510,9 @@ export default function YogaScreen() {
                 onPress={(item) =>
                   router.push({
                     pathname: "/(main)/yoga/[id]",
-                    params: { id: item._id },
+                    params: {
+                      id: item.id || item._id,
+                    },
                   })
                 }
               />

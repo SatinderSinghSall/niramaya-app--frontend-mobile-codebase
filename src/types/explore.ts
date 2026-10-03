@@ -132,7 +132,9 @@ export interface ExploreItem {
   [key: string]: unknown;
 }
 
-export interface RecommendationItem extends ExploreItem {
+export interface RecommendationItem extends Omit<ExploreItem, "_id"> {
+  id: string;
+
   recommendationReason?: string;
   score?: number;
   recommendationScore?: number;

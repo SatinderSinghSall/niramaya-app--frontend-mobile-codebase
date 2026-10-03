@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -18,31 +19,46 @@ import {
 } from "react-native-safe-area-context";
 
 import { StatusBar } from "expo-status-bar";
+
 import Constants from "expo-constants";
+
 import { Ionicons } from "@expo/vector-icons";
+
 import { router } from "expo-router";
 
 import { getProfile } from "../../../services/profile.service";
+
 import { UserProfile } from "../../../types/profile";
 
 import { useAuth } from "../../../context/AuthContext";
 
 const COLORS = {
   background: "#F5F7F4",
+
   surface: "#FFFFFF",
+
   primary: "#4D6A50",
+
   primaryDark: "#304A36",
+
   primarySoft: "#E7F0E5",
+
   text: "#202722",
+
   secondary: "#687169",
+
   muted: "#929A93",
+
   border: "#E3E8E2",
+
   danger: "#A75F56",
+
   dangerSoft: "#F9ECEA",
 };
 
 const getInitials = (profile: UserProfile) => {
   const first = profile.firstName?.charAt(0) ?? "";
+
   const last = profile.lastName?.charAt(0) ?? "";
 
   return `${first}${last}`.toUpperCase() || "U";
@@ -57,8 +73,38 @@ const formatMemberSince = (date: string) => {
 
   return parsed.toLocaleDateString(undefined, {
     month: "long",
+
     year: "numeric",
   });
+};
+
+type ExternalPage = {
+  title: string;
+  description: string;
+  url: string;
+};
+
+const openLegalPage = async (url: string) => {
+  try {
+    const supported = await Linking.canOpenURL(url);
+
+    if (!supported) {
+      Alert.alert(
+        "Unable to open page",
+        "This page could not be opened right now. Please try again later.",
+      );
+      return;
+    }
+
+    await Linking.openURL(url);
+  } catch (error) {
+    console.error("Failed to open legal page:", error);
+
+    Alert.alert(
+      "Unable to open page",
+      "Something went wrong while opening this page. Please try again later.",
+    );
+  }
 };
 
 export default function ProfileScreen() {
@@ -69,15 +115,24 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const [loading, setLoading] = useState(true);
+
   const [refreshing, setRefreshing] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+
   const [loggingOut, setLoggingOut] = useState(false);
 
+  const [externalPageModal, setExternalPageModal] =
+    useState<ExternalPage | null>(null);
+
   /*
+
    * App information
+
    */
+
   const appVersion = Constants.expoConfig?.version ?? "1.0.0";
 
   const buildNumber =
@@ -119,9 +174,25 @@ export default function ProfileScreen() {
     router.push("/(main)/settings");
   };
 
+  const handleOpenExternalPage = (page: ExternalPage) => {
+    setExternalPageModal(page);
+  };
+
+  const handleConfirmExternalPage = async () => {
+    if (!externalPageModal) {
+      return;
+    }
+
+    const { url } = externalPageModal;
+    setExternalPageModal(null);
+    await openLegalPage(url);
+  };
   /*
+
    * Logout
+
    */
+
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
@@ -138,6 +209,7 @@ export default function ProfileScreen() {
 
       Alert.alert(
         "Couldn't log out",
+
         "Something went wrong while logging out. Please try again.",
       );
     }
@@ -210,6 +282,7 @@ export default function ProfileScreen() {
         }}
       >
         {/* Header */}
+
         <View className="flex-row items-center px-5 pb-3 pt-3">
           <Pressable
             onPress={() => router.back()}
@@ -233,6 +306,7 @@ export default function ProfileScreen() {
         <View className="mx-5 mt-3 h-px bg-[#E3E8E2]" />
 
         {/* Profile identity */}
+
         <View className="mx-5 mt-5 overflow-hidden rounded-[24px] bg-[#304A36]">
           <View className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-[#4D6A50] opacity-60" />
 
@@ -280,6 +354,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Personal information */}
+
         <View className="mx-5 mt-6">
           <Text className="text-[16px] font-bold text-[#202722]">
             Personal information
@@ -317,6 +392,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Account */}
+
         <View className="mx-5 mt-7">
           <Text className="text-[16px] font-bold text-[#202722]">Account</Text>
 
@@ -349,6 +425,7 @@ export default function ProfileScreen() {
             <MenuDivider />
 
             {/* Logout */}
+
             <Pressable
               onPress={() => setLogoutModalVisible(true)}
               disabled={loggingOut}
@@ -381,6 +458,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Health profile */}
+
         <View className="mx-5 mt-7">
           <Text className="text-[16px] font-bold text-[#202722]">Wellness</Text>
 
@@ -403,7 +481,92 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        <View className="mx-5 mt-7">
+          <Text className="text-[16px] font-bold text-[#202722]">
+            Legal Pages
+          </Text>
+
+          <Text className="mt-1 text-[11px] text-[#858D87]">
+            Important information about using Niramaya.
+          </Text>
+
+          <View className="mt-3 overflow-hidden rounded-[20px] border border-[#E3E8E2] bg-white">
+            <MenuRow
+              icon="shield-checkmark-outline"
+              title="Privacy Policy"
+              subtitle="How Niramaya collects and uses your information"
+              onPress={() =>
+                handleOpenExternalPage({
+                  title: "Privacy Policy",
+                  description:
+                    "You’re being taken to the Niramaya website to view the Privacy Policy.",
+                  url: "https://niramaya-mobile.vercel.app/privacy",
+                })
+              }
+            />
+
+            <MenuDivider />
+
+            <MenuRow
+              icon="document-text-outline"
+              title="Terms of Use"
+              subtitle="Terms and conditions for using Niramaya"
+              onPress={() =>
+                handleOpenExternalPage({
+                  title: "Terms of Use",
+                  description:
+                    "You’re being taken to the Niramaya website to view the Terms of Use.",
+                  url: "https://niramaya-mobile.vercel.app/terms",
+                })
+              }
+            />
+
+            <MenuDivider />
+
+            <MenuRow
+              icon="medical-outline"
+              title="Wellness Disclaimer"
+              subtitle="Important information about wellness content"
+              onPress={() =>
+                handleOpenExternalPage({
+                  title: "Wellness Disclaimer",
+                  description:
+                    "You’re being taken to the Niramaya website to view the Wellness Disclaimer.",
+                  url: "https://niramaya-mobile.vercel.app/disclaimer",
+                })
+              }
+            />
+          </View>
+        </View>
+
+        <View className="mx-5 mt-7">
+          <Text className="text-[16px] font-bold text-[#202722]">
+            Frequently asked questions
+          </Text>
+
+          <Text className="mt-1 text-[11px] text-[#858D87]">
+            Find answers to common questions about Niramaya.
+          </Text>
+
+          <View className="mt-3 overflow-hidden rounded-[20px] border border-[#E3E8E2] bg-white">
+            <MenuRow
+              icon="help-circle-outline"
+              title="FAQs"
+              subtitle="Answers to common questions about Niramaya"
+              onPress={() =>
+                handleOpenExternalPage({
+                  title: "Frequently Asked Questions",
+                  description:
+                    "You’re being taken to the Niramaya website to view the Frequently Asked Questions.",
+                  url: "https://niramaya-mobile.vercel.app/faq",
+                })
+              }
+            />
+          </View>
+        </View>
+
         {/* Account status */}
+
         <View className="mx-5 mt-7 rounded-[18px] bg-[#EEF3ED] px-4 py-3.5">
           <View className="flex-row items-center">
             <Ionicons
@@ -419,6 +582,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Logout CTA */}
+
         <View className="mx-5 mt-7">
           <Pressable
             onPress={() => setLogoutModalVisible(true)}
@@ -447,6 +611,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* App information */}
+
         <View className="items-center px-5 pb-2 pt-8">
           <Text className="text-[11px] font-bold text-[#929A93]">Niramaya</Text>
 
@@ -456,7 +621,64 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
+      {/* External Website Confirmation Modal */}
+      <Modal
+        visible={externalPageModal !== null}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setExternalPageModal(null)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/45 px-6">
+          <View className="w-full max-w-[380px] rounded-[24px] bg-white px-5 pb-5 pt-6">
+            <View className="items-center">
+              <View className="h-14 w-14 items-center justify-center rounded-full bg-[#E7F0E5]">
+                <Ionicons
+                  name="globe-outline"
+                  size={25}
+                  color={COLORS.primary}
+                />
+              </View>
+            </View>
+
+            <View className="mt-4 items-center">
+              <Text className="text-[18px] font-bold text-[#202722]">
+                Open Niramaya Website?
+              </Text>
+
+              <Text className="mt-2 px-4 text-center text-[12px] leading-[19px] text-[#687169]">
+                {externalPageModal?.description}
+              </Text>
+            </View>
+
+            <View className="mt-6 flex-row gap-3">
+              <Pressable
+                onPress={() => setExternalPageModal(null)}
+                className="h-[48px] flex-1 items-center justify-center rounded-[14px] border border-[#DDE3DC] bg-[#F7F9F6]"
+              >
+                <Text className="text-[12px] font-bold text-[#4D564F]">
+                  Cancel
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleConfirmExternalPage}
+                className="h-[48px] flex-1 items-center justify-center rounded-[14px] bg-[#304A36]"
+                style={({ pressed }) => ({
+                  opacity: pressed ? 0.82 : 1,
+                })}
+              >
+                <Text className="text-[12px] font-extrabold text-white">
+                  Continue
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Logout Confirmation Modal */}
+
       <Modal
         visible={logoutModalVisible}
         transparent
@@ -471,6 +693,7 @@ export default function ProfileScreen() {
         <View className="flex-1 items-center justify-center bg-black/45 px-6">
           <View className="w-full max-w-[380px] rounded-[24px] bg-white px-5 pb-5 pt-6">
             {/* Modal icon */}
+
             <View className="items-center">
               <View className="h-14 w-14 items-center justify-center rounded-full bg-[#F9ECEA]">
                 <Ionicons
@@ -482,6 +705,7 @@ export default function ProfileScreen() {
             </View>
 
             {/* Modal content */}
+
             <View className="mt-4 items-center">
               <Text className="text-[18px] font-bold text-[#202722]">
                 Log out?
@@ -493,6 +717,7 @@ export default function ProfileScreen() {
             </View>
 
             {/* Modal buttons */}
+
             <View className="mt-6 flex-row gap-3">
               <Pressable
                 onPress={() => setLogoutModalVisible(false)}
@@ -530,15 +755,23 @@ export default function ProfileScreen() {
 
 function ProfileRow({
   icon,
+
   label,
+
   value,
+
   badge,
+
   badgePositive,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
+
   label: string;
+
   value: string;
+
   badge?: string;
+
   badgePositive?: boolean;
 }) {
   return (
@@ -585,13 +818,19 @@ function ProfileDivider() {
 
 function MenuRow({
   icon,
+
   title,
+
   subtitle,
+
   onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
+
   title: string;
+
   subtitle: string;
+
   onPress: () => void;
 }) {
   return (

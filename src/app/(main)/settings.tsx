@@ -21,11 +21,7 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
-import {
-  deleteAccount,
-  getSettings,
-  updateSettings,
-} from "../../services/profile.service";
+import { getSettings, updateSettings } from "../../services/profile.service";
 
 import { ThemePreference, UserSettings } from "../../types/profile";
 
@@ -42,8 +38,6 @@ export default function SettingsScreen() {
 
   const [themeModal, setThemeModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deleting, setDeleting] = useState(false);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -122,50 +116,6 @@ export default function SettingsScreen() {
         theme,
       },
     });
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!deletePassword.trim()) {
-      Alert.alert(
-        "Password required",
-        "Enter your password to confirm account deletion.",
-      );
-
-      return;
-    }
-
-    try {
-      setDeleting(true);
-
-      await deleteAccount({
-        password: deletePassword,
-      });
-
-      setDeleteModal(false);
-
-      Alert.alert(
-        "Account deactivated",
-        "Your account has been deactivated successfully.",
-        [
-          {
-            text: "Continue",
-            onPress: () => {
-              router.replace("/(public)/login");
-            },
-          },
-        ],
-      );
-    } catch (error: any) {
-      console.error("Delete account failed:", error);
-
-      Alert.alert(
-        "Couldn't delete account",
-        error?.response?.data?.message ??
-          "The password may be incorrect. Please try again.",
-      );
-    } finally {
-      setDeleting(false);
-    }
   };
 
   if (loading || !settings) {
@@ -497,7 +447,7 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-      {/* Delete account modal */}
+      {/* Delete account warning modal */}
       <Modal
         visible={deleteModal}
         transparent
@@ -505,37 +455,45 @@ export default function SettingsScreen() {
         onRequestClose={() => setDeleteModal(false)}
       >
         <View className="flex-1 items-center justify-center bg-black/35 px-5">
-          <View className="w-full rounded-[24px] bg-white p-5">
-            <View className="h-11 w-11 items-center justify-center rounded-[14px] bg-[#F9ECEA]">
-              <Ionicons name="warning-outline" size={21} color="#A75F56" />
+          <View className="w-full rounded-[26px] bg-white px-5 pb-5 pt-6">
+            <View className="h-12 w-12 items-center justify-center rounded-[15px] bg-[#F9ECEA]">
+              <Ionicons name="warning-outline" size={23} color="#A75F56" />
             </View>
 
-            <Text className="mt-4 text-[18px] font-bold text-[#202722]">
-              Delete account?
+            <Text className="mt-4 text-[19px] font-bold tracking-[-0.2px] text-[#202722]">
+              Delete your account?
             </Text>
 
-            <Text className="mt-2 text-[11px] leading-[17px] text-[#687169]">
-              Your account will be deactivated. Enter your password to confirm
-              this action.
+            <Text className="mt-2 text-[12px] leading-[19px] text-[#687169]">
+              Your Niramaya account will be deactivated and you will be signed
+              out. This action affects your account and requires confirmation.
             </Text>
 
-            <TextInput
-              value={deletePassword}
-              onChangeText={setDeletePassword}
-              secureTextEntry
-              placeholder="Password"
-              placeholderTextColor="#A1A8A2"
-              autoCapitalize="none"
-              className="mt-5 h-[50px] rounded-[15px] border border-[#E3E8E2] px-4 text-[13px] text-[#202722]"
-            />
+            <View className="mt-4 rounded-[16px] border border-[#F0DAD7] bg-[#FDF5F3] px-4 py-3.5">
+              <View className="flex-row items-start">
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={18}
+                  color="#A75F56"
+                />
+
+                <View className="ml-2.5 flex-1">
+                  <Text className="text-[12px] font-bold text-[#8F5149]">
+                    This is a sensitive account action
+                  </Text>
+
+                  <Text className="mt-1 text-[10px] leading-[16px] text-[#9A6B65]">
+                    You will need to verify your password on the next screen
+                    before your account can be deactivated.
+                  </Text>
+                </View>
+              </View>
+            </View>
 
             <View className="mt-5 flex-row">
               <Pressable
-                onPress={() => {
-                  setDeleteModal(false);
-                  setDeletePassword("");
-                }}
-                className="mr-2 h-[46px] flex-1 items-center justify-center rounded-[14px] bg-[#F1F3F0]"
+                onPress={() => setDeleteModal(false)}
+                className="mr-1.5 h-[48px] flex-1 items-center justify-center rounded-[15px] bg-[#F1F3F0]"
               >
                 <Text className="text-[12px] font-bold text-[#687169]">
                   Cancel
@@ -543,17 +501,22 @@ export default function SettingsScreen() {
               </Pressable>
 
               <Pressable
-                onPress={handleDeleteAccount}
-                disabled={deleting}
-                className="ml-2 h-[46px] flex-1 flex-row items-center justify-center rounded-[14px] bg-[#A75F56]"
+                onPress={() => {
+                  setDeleteModal(false);
+                  router.push("/(main)/delete-account");
+                }}
+                className="ml-1.5 h-[48px] flex-1 flex-row items-center justify-center rounded-[15px] bg-[#A75F56]"
               >
-                {deleting ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text className="text-[12px] font-extrabold text-white">
-                    Delete account
-                  </Text>
-                )}
+                <Text className="text-[12px] font-extrabold text-white">
+                  Proceed
+                </Text>
+
+                <Ionicons
+                  name="arrow-forward"
+                  size={15}
+                  color="#FFFFFF"
+                  style={{ marginLeft: 7 }}
+                />
               </Pressable>
             </View>
           </View>

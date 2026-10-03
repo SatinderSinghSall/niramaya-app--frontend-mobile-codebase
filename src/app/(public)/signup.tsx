@@ -15,11 +15,11 @@ import {
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios";
 
 import { Input } from "@/components/forms/Input";
 import { PasswordInput } from "@/components/forms/PasswordInput";
 import { useAuth } from "@/context/AuthContext";
+import { getApiErrorMessage } from "@/utils/apiError";
 
 export default function SignupScreen() {
   const { register } = useAuth();
@@ -32,7 +32,6 @@ export default function SignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-
   const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -91,8 +90,19 @@ export default function SignupScreen() {
 
     if (!password) {
       nextErrors.password = "Password is required.";
-    } else if (password.length < 8) {
-      nextErrors.password = "Password must be at least 8 characters.";
+    } else if (password.length < 6) {
+      nextErrors.password = "Password must be at least 6 characters.";
+    } else if (!/[a-z]/.test(password)) {
+      nextErrors.password =
+        "Password must contain at least one lowercase letter.";
+    } else if (!/[A-Z]/.test(password)) {
+      nextErrors.password =
+        "Password must contain at least one uppercase letter.";
+    } else if (!/[0-9]/.test(password)) {
+      nextErrors.password = "Password must contain at least one number.";
+    } else if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]/`~+=;']/g.test(password)) {
+      nextErrors.password =
+        "Password must contain at least one special character.";
     }
 
     if (!confirmPassword) {
@@ -117,6 +127,7 @@ export default function SignupScreen() {
       }
 
       const next = { ...current };
+
       delete next[field];
 
       return next;
@@ -128,6 +139,7 @@ export default function SignupScreen() {
   --------------------------------- */
 
   const handleSignup = async () => {
+    // Prevent duplicate requests
     if (loading) {
       return;
     }
@@ -139,6 +151,7 @@ export default function SignupScreen() {
     }
 
     try {
+      Keyboard.dismiss();
       setLoading(true);
 
       await register({
@@ -151,16 +164,12 @@ export default function SignupScreen() {
 
       router.replace("/(onboarding)/about-you");
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message =
-          error.response?.data?.message || "Unable to create your account.";
-
-        setGeneralError(message);
-      } else {
-        setGeneralError(
-          "Something went wrong while creating your account. Please try again.",
-        );
-      }
+      setGeneralError(
+        getApiErrorMessage(
+          error,
+          "Unable to create your account. Please try again.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -183,7 +192,7 @@ export default function SignupScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="relative flex-1 bg-background">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -195,6 +204,7 @@ export default function SignupScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           bounces={false}
+          scrollEnabled={!loading}
         >
           <View className="flex-1 px-6 pt-5">
             {/* ---------------------------------
@@ -607,6 +617,41 @@ export default function SignupScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* ---------------------------------
+          Full-screen loading overlay
+          --------------------------------- */}
+
+      {loading ? (
+        <View
+          className="absolute inset-0 z-50 items-center justify-center bg-[#F8FAF6]/95"
+          pointerEvents="auto"
+        >
+          <View className="items-center rounded-[22px] border border-[#E1E7DF] bg-white px-8 py-7 shadow-sm">
+            <View className="h-16 w-16 overflow-hidden rounded-2xl bg-[#EEF2E6]">
+              <Image
+                source={require("../../../assets/images/app-icon.jpeg")}
+                resizeMode="contain"
+                className="h-full w-full"
+              />
+            </View>
+
+            <ActivityIndicator
+              size="large"
+              color="#4D6A50"
+              style={{ marginTop: 22 }}
+            />
+
+            <Text className="mt-4 text-[16px] font-bold text-[#263F31]">
+              Creating your account...
+            </Text>
+
+            <Text className="mt-1.5 text-center text-[12px] leading-[18px] text-[#7B887D]">
+              Please wait while we securely create your Niramaya account.
+            </Text>
+          </View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }

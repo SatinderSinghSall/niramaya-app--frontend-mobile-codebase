@@ -18,50 +18,50 @@ export default function DrawerItem({
   danger = false,
   badge,
 }: DrawerItemProps) {
-  const iconColor = danger ? "#C85C55" : active ? "#4D6A50" : "#727C74";
-
-  const textColor = danger ? "#B5524B" : active ? "#304B36" : "#465049";
+  const iconColor = danger ? "#D35B52" : active ? "#3B5A3E" : "#68736A";
+  const textColor = danger ? "#C54840" : active ? "#243D28" : "#3B463E";
 
   return (
     <Pressable
       onPress={onPress}
-      className={`mx-3 mb-0.5 h-[44px] flex-row items-center px-2.5 ${
-        active ? "rounded-[9px] bg-[#F1F5EE]" : "rounded-[9px]"
+      className={`mx-3 my-0.5 h-[46px] flex-row items-center px-3 transition-all ${
+        active
+          ? "rounded-[12px] bg-[#EAF2E7] border border-[#D5E4D0]"
+          : "rounded-[12px] bg-transparent"
       }`}
       style={({ pressed }) => ({
-        opacity: pressed ? 0.58 : 1,
+        opacity: pressed ? 0.6 : 1,
       })}
     >
       {/* ================================================================
-          ACTIVE ACCENT
+          ACTIVE ACCENT BAR (LEFT)
       ================================================================= */}
-
-      <View className="mr-1.5 w-[3px] items-center justify-center">
+      <View className="mr-2 w-[3px] items-center justify-center">
         {active ? (
-          <View className="h-[20px] w-[3px] rounded-full bg-[#4D6A50]" />
+          <View className="h-[18px] w-[3px] rounded-full bg-[#4D6A50]" />
         ) : null}
       </View>
 
       {/* ================================================================
-          ICON
+          ICON CONTAINER
       ================================================================= */}
-
-      <View className="h-[34px] w-[30px] items-center justify-center">
-        <Ionicons name={icon} size={19} color={iconColor} />
+      <View
+        className={`h-[34px] w-[32px] items-center justify-center rounded-lg ${active ? "bg-[#DFEFE0]" : "bg-[#F4F7F3]"}`}
+      >
+        <Ionicons name={icon} size={18} color={iconColor} />
       </View>
 
       {/* ================================================================
           LABEL
       ================================================================= */}
-
       <Text
         numberOfLines={1}
-        className={`ml-2 flex-1 text-[13px] ${
-          active ? "font-semibold" : "font-medium"
+        className={`ml-2.5 flex-1 text-[13.5px] ${
+          active ? "font-bold" : "font-medium"
         }`}
         style={{
           color: textColor,
-          letterSpacing: 0.05,
+          letterSpacing: 0.1,
         }}
       >
         {label}
@@ -70,21 +70,19 @@ export default function DrawerItem({
       {/* ================================================================
           NOTIFICATION BADGE
       ================================================================= */}
-
       {typeof badge === "number" && badge > 0 ? (
         <View className="mr-2 min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#D95C57] px-[5px]">
-          <Text className="text-[8px] font-bold text-white">
+          <Text className="text-[9px] font-bold text-white">
             {badge > 99 ? "99+" : badge}
           </Text>
         </View>
       ) : null}
 
       {/* ================================================================
-          ACTIVE INDICATOR
+          ACTIVE SUBTLE DOT INDICATOR
       ================================================================= */}
-
       {active ? (
-        <View className="mr-1 h-[5px] w-[5px] rounded-full bg-[#4D6A50]" />
+        <View className="mr-1 h-[6px] w-[6px] rounded-full bg-[#4D6A50]" />
       ) : null}
     </Pressable>
   );

@@ -194,9 +194,28 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
           Bottom branding
       --------------------------------- */}
 
-      <View className="absolute bottom-8 items-center">
-        <Text className="text-[9px] tracking-[1px] text-[#9AA19B]">
-          HOLISTIC HEALTH & WELLBEING
+      {/* ---------------------------------
+          Developer credit + bottom branding
+      --------------------------------- */}
+
+      <View className="absolute bottom-7 items-center px-6">
+        <Text className="text-center text-[11px] font-medium tracking-[1px] text-[#7F8B82]">
+          App Developed by
+        </Text>
+
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+          className="mt-1.5 text-center text-[13px] font-bold tracking-[0.35px] text-[#59665D]"
+        >
+          Satinder Singh Sall &amp; Soni Vaibhav Kumar
+        </Text>
+
+        <View className="mt-3 h-[1px] w-7 bg-[#B8C4B5] opacity-70" />
+
+        <Text className="mt-2.5 text-center text-[9px] tracking-[1.1px] text-[#9AA19B]">
+          HOLISTIC HEALTH &amp; WELLBEING
         </Text>
       </View>
     </View>

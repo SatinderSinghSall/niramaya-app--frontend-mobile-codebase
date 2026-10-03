@@ -14,10 +14,9 @@ import {
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios";
-
 import { Image } from "react-native";
 
+import { getApiErrorMessage } from "@/utils/apiError";
 import { Input } from "@/components/forms/Input";
 import { PasswordInput } from "@/components/forms/PasswordInput";
 import { useAuth } from "@/context/AuthContext";
@@ -109,6 +108,9 @@ export default function LoginScreen() {
     }
 
     try {
+      // Dismiss keyboard immediately when login starts.
+      Keyboard.dismiss();
+
       setLoading(true);
 
       await login({
@@ -118,17 +120,9 @@ export default function LoginScreen() {
 
       router.replace("/(main)/home");
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message =
-          error.response?.data?.message ||
-          "Unable to sign in. Please check your email and password.";
-
-        setGeneralError(message);
-      } else {
-        setGeneralError(
-          "Something went wrong while signing in. Please try again.",
-        );
-      }
+      setGeneralError(
+        getApiErrorMessage(error, "Unable to sign in. Please try again."),
+      );
     } finally {
       setLoading(false);
     }
@@ -147,7 +141,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="relative flex-1 bg-background">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -164,6 +158,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           bounces={false}
+          scrollEnabled={!loading}
         >
           <View className="flex-1 px-6 pt-5">
             {/* ---------------------------------
@@ -261,7 +256,7 @@ export default function LoginScreen() {
                   </View>
 
                   {/* Actual error message */}
-                  <View className="mt-2.5 ml-12">
+                  <View className="ml-12 mt-2.5">
                     <Text className="text-[12px] leading-[18px] text-[#A96761]">
                       {generalError}
                     </Text>
@@ -446,6 +441,47 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* ---------------------------------
+          Full Screen Loading Overlay
+      --------------------------------- */}
+
+      {loading ? (
+        <View
+          className="absolute inset-0 z-50 items-center justify-center bg-[#F8FAF6]/95"
+          pointerEvents="auto"
+        >
+          <View className="items-center rounded-[22px] border border-[#E1E7DF] bg-white px-8 py-7 shadow-sm">
+            {/* App Icon */}
+            <View className="h-16 w-16 overflow-hidden rounded-2xl bg-[#EEF2E6]">
+              <Image
+                source={require("../../../assets/images/app-icon.jpeg")}
+                resizeMode="contain"
+                className="h-full w-full"
+              />
+            </View>
+
+            {/* Loader */}
+            <ActivityIndicator
+              size="large"
+              color="#4D6A50"
+              style={{
+                marginTop: 22,
+              }}
+            />
+
+            {/* Loading title */}
+            <Text className="mt-4 text-[16px] font-bold text-[#263F31]">
+              Signing in...
+            </Text>
+
+            {/* Loading description */}
+            <Text className="mt-1.5 text-center text-[12px] leading-[18px] text-[#7B887D]">
+              Please wait while we securely sign you in.
+            </Text>
+          </View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
