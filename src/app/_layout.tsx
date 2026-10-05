@@ -9,6 +9,9 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { OnboardingProvider } from "@/context/OnboardingContext";
 import SplashScreen from "@/components/common/SplashScreen";
 import InternetRequiredModal from "@/components/common/InternetRequiredModal";
+import AppUpdateGate from "../components/common/AppUpdateGate";
+import MaintenanceGate from "../components/common/MaintenanceGate";
+import FloatingDisclaimerCTA from "../components/common/FloatingDisclaimerCTA";
 
 interface AppContentProps {
   networkChecked: boolean;
@@ -63,6 +66,9 @@ function AppContent({
         visible={networkChecked && isOffline && offlineModalVisible}
         onClose={onCloseOfflineModal}
       />
+
+      <AppUpdateGate />
+      <FloatingDisclaimerCTA />
     </>
   );
 }
@@ -106,14 +112,16 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <OnboardingProvider>
-        <AppContent
-          networkChecked={networkChecked}
-          isOffline={isOffline}
-          offlineModalVisible={offlineModalVisible}
-          onCloseOfflineModal={() => {
-            setOfflineModalVisible(false);
-          }}
-        />
+        <MaintenanceGate>
+          <AppContent
+            networkChecked={networkChecked}
+            isOffline={isOffline}
+            offlineModalVisible={offlineModalVisible}
+            onCloseOfflineModal={() => {
+              setOfflineModalVisible(false);
+            }}
+          />
+        </MaintenanceGate>
       </OnboardingProvider>
     </AuthProvider>
   );
