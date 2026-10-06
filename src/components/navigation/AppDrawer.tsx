@@ -339,6 +339,22 @@ export default function AppDrawer() {
                 onPress={() => navigate("/(main)/favorites")}
               />
 
+              <DrawerSectionTitle>ANNOUNCEMENTS</DrawerSectionTitle>
+              <DrawerItem
+                label="Announcements"
+                icon="megaphone-outline"
+                active={isActive("/announcements")}
+                onPress={() => navigate("/(main)/announcements")}
+              />
+
+              <DrawerSectionTitle>HEALTH & WELLNESS</DrawerSectionTitle>
+              <DrawerItem
+                label="Health & Wellness Tips"
+                icon="heart-outline"
+                active={isActive("/health-wellness-tips")}
+                onPress={() => navigate("/(main)/health-wellness-tips")}
+              />
+
               <DrawerSectionTitle>PERSONAL</DrawerSectionTitle>
               <DrawerItem
                 label="Health Profile"

@@ -18,7 +18,7 @@ export default function GoalsCTA({ activeGoals = 0 }: GoalsCTAProps) {
     <TouchableOpacity
       activeOpacity={0.92}
       onPress={handlePress}
-      className="mt-8 overflow-hidden rounded-[22px] border border-white/10"
+      className="mt-8 mb-6 overflow-hidden rounded-[22px] border border-white/10"
     >
       <ImageBackground
         source={require("../../../assets/images/goals-cta.jpg")}

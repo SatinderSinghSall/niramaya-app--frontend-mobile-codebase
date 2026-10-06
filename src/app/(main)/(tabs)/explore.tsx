@@ -37,6 +37,8 @@ import ExploreEmptyState from "@/components/explore/ExploreEmptyState";
 import GoalsCTA from "@/components/home/GoalsCTA";
 import HealthProfileCTA from "@/components/home/HealthProfileCTA";
 import ConsultationCTA from "@/components/home/ConsultationCTA";
+import AnnouncementsPreview from "@/components/home/AnnouncementsPreview";
+import HealthWellnessTipsCTA from "@/components/healthWellness/HealthWellnessTipsCTA";
 
 /* ========================================================================== */
 /* COLORS                                                                     */
@@ -1490,6 +1492,9 @@ export default function ExploreScreen() {
               {/* Goals CTA */}
               <GoalsCTA />
 
+              {/* Announcements CTA */}
+              <AnnouncementsPreview />
+
               {/* ================================================================ */}
               {/* YOGA                                                             */}
               {/* ================================================================ */}
@@ -1569,6 +1574,9 @@ export default function ExploreScreen() {
 
               {/* Health History CTA */}
               <HealthProfileCTA />
+
+              {/* Health & Wellness Tip CTA */}
+              <HealthWellnessTipsCTA />
 
               {/* ================================================================ */}
               {/* WISDOM                                                           */}

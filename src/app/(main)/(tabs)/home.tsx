@@ -33,6 +33,8 @@ import HealthProfileCTA from "@/components/home/HealthProfileCTA";
 import ConsultationCTA from "@/components/home/ConsultationCTA";
 import { getUnreadNotificationCount } from "@/services/notification.service";
 import { useDrawer } from "@/components/navigation/DrawerContext";
+import AnnouncementsPreview from "@/components/home/AnnouncementsPreview";
+import HealthWellnessTipsCTA from "@/components/healthWellness/HealthWellnessTipsCTA";
 
 /* ==========================================================================
    COLORS
@@ -1174,11 +1176,14 @@ export default function HomeScreen() {
         {/* Goals CTA */}
         <GoalsCTA />
 
+        {/* Announcements CTA */}
+        <AnnouncementsPreview />
+
         {/* ================================================================
             DAILY WISDOM
         ================================================================ */}
 
-        <View className="mt-8">
+        <View className="mt-8 mb-4">
           <SectionHeader
             title="Daily Wisdom"
             action="See All"
@@ -1189,6 +1194,9 @@ export default function HomeScreen() {
 
           <WisdomTiles />
         </View>
+
+        {/* Health Tip CTA */}
+        <HealthWellnessTipsCTA />
 
         {/*Consultation CTA  */}
         <ConsultationCTA />
