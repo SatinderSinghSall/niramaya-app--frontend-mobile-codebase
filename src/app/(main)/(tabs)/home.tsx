@@ -35,6 +35,7 @@ import { getUnreadNotificationCount } from "@/services/notification.service";
 import { useDrawer } from "@/components/navigation/DrawerContext";
 import AnnouncementsPreview from "@/components/home/AnnouncementsPreview";
 import HealthWellnessTipsCTA from "@/components/healthWellness/HealthWellnessTipsCTA";
+import DashboardProgress from "@/components/home/DashboardProgress";
 
 /* ==========================================================================
    COLORS
@@ -1212,6 +1213,9 @@ export default function HomeScreen() {
         ================================================================ */}
 
         <WellnessShorts />
+
+        {/* Dashboard Progress */}
+        {dashboard ? <DashboardProgress data={dashboard} /> : null}
 
         {/* ================================================================
             FEATURE BANNER

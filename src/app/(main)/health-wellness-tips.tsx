@@ -457,32 +457,36 @@ export default function HealthWellnessTipsScreen() {
                     </View>
                   </View>
 
-                  {/* EMPTY */}
-
+                  {/* EMPTY STATE */}
                   {tips.length === 0 ? (
-                    <View className="mt-5 items-center rounded-3xl border border-slate-100 bg-white px-6 py-10">
-                      <View className="h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50">
+                    <View className="mt-5 items-center rounded-2xl border border-slate-200 bg-white px-6 py-8">
+                      <View className="h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
                         <Ionicons
                           name="leaf-outline"
-                          size={27}
-                          color="#059669"
+                          size={24}
+                          color="#356B46"
                         />
                       </View>
 
-                      <Text className="mt-4 text-[15px] font-extrabold text-slate-900">
-                        No tips found
+                      <Text className="mt-4 text-base font-semibold text-slate-800">
+                        No wellness tips found
                       </Text>
 
-                      <Text className="mt-2 max-w-[270px] text-center text-xs leading-5 text-slate-400">
-                        Try another category or search for something different.
+                      <Text className="mt-2 max-w-[260px] text-center text-sm leading-5 text-slate-500">
+                        Try changing your search or selecting a different
+                        category.
                       </Text>
 
                       <Pressable
                         onPress={resetFilters}
-                        className="mt-5 rounded-full bg-emerald-600 px-5 py-2.5"
+                        accessibilityRole="button"
+                        className="mt-5 flex-row items-center justify-center rounded-xl bg-[#356B46] px-5 py-3"
+                        style={({ pressed }) => ({
+                          opacity: pressed ? 0.8 : 1,
+                        })}
                       >
-                        <Text className="text-xs font-bold text-white">
-                          View all tips
+                        <Text className="text-sm font-semibold text-white">
+                          Clear filters
                         </Text>
                       </Pressable>
                     </View>

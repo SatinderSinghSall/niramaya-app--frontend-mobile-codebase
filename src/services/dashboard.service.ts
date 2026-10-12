@@ -1,8 +1,16 @@
 import { api } from "@/services/api";
-import { DashboardData } from "@/types/dashboard";
+import type { DashboardData } from "@/types/dashboard";
 
 export async function getDashboard(): Promise<DashboardData> {
-  const response = await api.get("/dashboard");
+  const response = await api.get<{ success?: boolean; data?: DashboardData }>(
+    "/dashboard",
+  );
 
-  return response.data?.data ?? response.data;
+  const dashboard = response.data?.data;
+
+  if (!dashboard) {
+    throw new Error("Invalid dashboard response");
+  }
+
+  return dashboard;
 }
