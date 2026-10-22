@@ -385,6 +385,14 @@ export default function AppDrawer() {
                 onPress={() => navigate("/(main)/settings")}
               />
 
+              <DrawerSectionTitle>DEVELOPERS</DrawerSectionTitle>
+              <DrawerItem
+                label="Meet the Developers"
+                icon="settings-outline"
+                active={isActive("/developers")}
+                onPress={() => navigate("/(main)/developers")}
+              />
+
               {/* LOGOUT BUTTON */}
               <Pressable
                 disabled={showLogoutConfirmation}
