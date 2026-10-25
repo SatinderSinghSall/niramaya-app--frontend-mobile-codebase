@@ -11,7 +11,10 @@ import {
 } from "react-native";
 import { Stack, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 const teamPhoto = require("../../../assets/images/developers-pic.jpeg");
 
@@ -206,6 +209,8 @@ function DeveloperCard({
 }
 
 export default function DevelopersScreen() {
+  const insets = useSafeAreaInsets();
+
   return (
     <>
       <Stack.Screen
@@ -215,7 +220,7 @@ export default function DevelopersScreen() {
         }}
       />
 
-      <SafeAreaView className="flex-1 bg-[#F5F8F5]" edges={["top"]}>
+      <SafeAreaView className="flex-1 bg-[#F5F8F5]" edges={["top", "bottom"]}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
         {/* Navigation header */}
@@ -248,7 +253,7 @@ export default function DevelopersScreen() {
           contentContainerStyle={{
             paddingHorizontal: 18,
             paddingTop: 20,
-            paddingBottom: 36,
+            paddingBottom: Math.max(insets.bottom, 24) + 24,
           }}
         >
           {/* Hero */}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   ActivityIndicator,
@@ -18,6 +19,7 @@ interface SplashScreenProps {
 
 export default function SplashScreen({ onFinish }: SplashScreenProps) {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   /* ---------------------------------
      Animation values
@@ -198,7 +200,12 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
           Developer credit + bottom branding
       --------------------------------- */}
 
-      <View className="absolute bottom-7 items-center px-6">
+      <View
+        className="absolute items-center px-6"
+        style={{
+          bottom: Math.max(insets.bottom, 12) + 12,
+        }}
+      >
         <Text className="text-center text-[11px] font-medium tracking-[1px] text-[#7F8B82]">
           App Developed by
         </Text>
