@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { Tabs, useRouter, type Href } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
@@ -242,7 +242,8 @@ function YogaTabIcon({ focused, label }: { focused: boolean; label: string }) {
  * ===============================================================
  */
 
-function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+function CustomTabBar({ state, descriptors }: BottomTabBarProps) {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   // Safe calculation to ensure it clears device system bars safely on both iOS & Android
   const bottomMargin = Math.max(insets.bottom, 14);
@@ -272,22 +273,13 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           if (!config) return null;
 
           const onPress = () => {
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!focused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
+            if (!focused) {
+              router.navigate(`/(main)/(tabs)/${route.name}` as Href);
             }
           };
 
           const onLongPress = () => {
-            navigation.emit({
-              type: "tabLongPress",
-              target: route.key,
-            });
+            // Intentionally empty.
           };
 
           return (
