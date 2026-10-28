@@ -395,6 +395,73 @@ function ProfileEmpty({ onRetry }: { onRetry: () => void }) {
 }
 
 /* ==========================================================================
+   HEALTH PROFILE NOT CREATED
+========================================================================== */
+
+function ProfileNotCreated() {
+  const handleCreateProfile = () => {
+    router.push("/(onboarding)/about-you" as any);
+  };
+
+  return (
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      className="flex-1 items-center justify-center bg-[#F7F5EF] px-[18px]"
+    >
+      <View className="w-full rounded-[22px] border border-[#E2E7E1] bg-white px-6 py-8">
+        {/* Icon */}
+        <View className="mx-auto h-16 w-16 items-center justify-center rounded-full bg-[#EDF4EA]">
+          <Ionicons name="heart-outline" size={28} color={COLORS.green} />
+        </View>
+
+        {/* Heading */}
+        <Text className="mt-5 text-center text-[21px] font-bold text-[#263128]">
+          Your Health Journey Starts Here
+        </Text>
+
+        {/* Description */}
+        <Text className="mt-3 text-center text-[11px] leading-[18px] text-[#777C74]">
+          You haven't created your health profile yet. Tell us a little about
+          yourself to get a more personalized wellness experience.
+        </Text>
+
+        {/* Information */}
+        <View className="mt-6 rounded-[14px] bg-[#F3F7F1] px-4 py-4">
+          <Text className="text-center text-[11px] font-bold text-[#304B36]">
+            What you'll set up
+          </Text>
+
+          <Text className="mt-2 text-center text-[10px] leading-[18px] text-[#718071]">
+            Personal details, physical health, lifestyle, nutrition, sleep,
+            fitness and wellness preferences.
+          </Text>
+        </View>
+
+        {/* CTA */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={handleCreateProfile}
+          accessibilityRole="button"
+          accessibilityLabel="Create health profile"
+          className="mt-6 flex-row items-center justify-center rounded-[12px] bg-[#4D6A50] py-4"
+        >
+          <Text className="mr-2 text-[12px] font-bold text-white">
+            Create Health Profile
+          </Text>
+
+          <Ionicons name="arrow-forward" size={17} color="#FFFFFF" />
+        </TouchableOpacity>
+
+        {/* Footer */}
+        <Text className="mt-4 text-center text-[9px] leading-[14px] text-[#92978F]">
+          Take the first step towards better wellbeing.
+        </Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+/* ==========================================================================
    ERROR
 ========================================================================== */
 
@@ -489,20 +556,25 @@ export default function HealthProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [profileNotCreated, setProfileNotCreated] = useState(false);
 
   const loadProfile = useCallback(async () => {
     try {
       setError("");
+      setProfileNotCreated(false);
 
       const data = await getHealthProfile();
 
       setProfile(data ?? null);
     } catch (err: any) {
-      console.error("Health profile loading error:", err);
-
       if (err?.response?.status === 404) {
+        // A missing health profile is a normal onboarding state.
         setProfile(null);
+        setProfileNotCreated(true);
       } else {
+        console.error("Health profile loading error:", err);
+
+        setProfile(null);
         setError(
           err?.response?.data?.message ||
             err?.message ||
@@ -542,6 +614,10 @@ export default function HealthProfileScreen() {
         }}
       />
     );
+  }
+
+  if (profileNotCreated) {
+    return <ProfileNotCreated />;
   }
 
   if (!profile) {
