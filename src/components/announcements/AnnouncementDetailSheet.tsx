@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   CalendarDays,
@@ -19,6 +20,7 @@ import {
   Dimensions,
   Modal,
   PanResponder,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -140,6 +142,8 @@ export default function AnnouncementDetailSheet({
   const currentTranslateY = useRef(SCREEN_HEIGHT);
 
   const config = typeConfig[announcement?.type ?? "info"] ?? typeConfig.info;
+
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const listener = translateY.addListener(({ value }) => {
@@ -364,7 +368,7 @@ export default function AnnouncementDetailSheet({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
               padding: 16,
-              paddingBottom: 28,
+              paddingBottom: 28 + insets.bottom,
             }}
             nestedScrollEnabled
           >

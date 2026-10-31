@@ -367,7 +367,7 @@ export default function ConsultationDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView
-        edges={["top"]}
+        edges={["top", "bottom"]}
         className="flex-1"
         style={{ backgroundColor: COLORS.background }}
       >
@@ -406,7 +406,7 @@ export default function ConsultationDetailScreen() {
   if (error || !consultation) {
     return (
       <SafeAreaView
-        edges={["top"]}
+        edges={["top", "bottom"]}
         className="flex-1"
         style={{ backgroundColor: COLORS.background }}
       >
@@ -460,13 +460,14 @@ export default function ConsultationDetailScreen() {
 
   return (
     <SafeAreaView
-      edges={["top"]}
+      edges={["top", "bottom"]}
       className="flex-1"
       style={{ backgroundColor: COLORS.background }}
     >
       <Header />
 
       <ScrollView
+        style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: 18,

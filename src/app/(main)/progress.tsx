@@ -239,7 +239,7 @@ const SkeletonBlock = ({ className }: { className: string }) => (
 
 const ProgressSkeleton = () => (
   <SafeAreaView
-    edges={["top"]}
+    edges={["top", "bottom"]}
     className="flex-1"
     style={{ backgroundColor: COLORS.background }}
   >
@@ -621,15 +621,17 @@ export default function ProgressScreen() {
 
   return (
     <SafeAreaView
-      edges={["top"]}
+      edges={["top", "bottom"]}
       className="flex-1"
       style={{ backgroundColor: COLORS.background }}
     >
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
+          style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           refreshControl={
@@ -642,12 +644,7 @@ export default function ProgressScreen() {
           contentContainerStyle={{
             flexGrow: 1,
             paddingHorizontal: 20,
-
-            // IMPORTANT:
-            // Android gets extra scrollable space equal to the
-            // keyboard height. This lets us scroll all the way
-            // to the bottom while the keyboard stays OPEN.
-            paddingBottom: Platform.OS === "android" ? keyboardHeight + 50 : 50,
+            paddingBottom: Platform.OS === "android" ? keyboardHeight + 80 : 80,
           }}
         >
           {/* Header */}
@@ -1192,7 +1189,7 @@ export default function ProgressScreen() {
           ) : null}
 
           <View className="mt-6 items-center">
-            <Text className="text-[9px] text-[#A4A89F]">
+            <Text className="text-[10px] text-[#A4A89F]">
               Pull down anytime to refresh your progress.
             </Text>
           </View>
