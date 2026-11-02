@@ -607,7 +607,7 @@ function DetailSkeleton() {
 
   return (
     <SafeAreaView
-      edges={["top"]}
+      edges={["top", "bottom"]}
       className="flex-1"
       style={{ backgroundColor: COLORS.background }}
     >
@@ -829,7 +829,7 @@ export default function ProgressDetailScreen() {
   if (error || !progress) {
     return (
       <SafeAreaView
-        edges={["top"]}
+        edges={["top", "bottom"]}
         className="flex-1"
         style={{ backgroundColor: COLORS.background }}
       >
@@ -867,7 +867,7 @@ export default function ProgressDetailScreen() {
 
   return (
     <SafeAreaView
-      edges={["top"]}
+      edges={["top", "bottom"]}
       className="flex-1"
       style={{ backgroundColor: COLORS.background }}
     >
@@ -884,7 +884,8 @@ export default function ProgressDetailScreen() {
         }
         contentContainerStyle={{
           paddingHorizontal: 18,
-          paddingBottom: 45,
+          paddingTop: 10,
+          paddingBottom: 60,
         }}
       >
         <View className="flex-row items-center justify-between pt-3">

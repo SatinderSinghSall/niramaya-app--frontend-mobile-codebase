@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   ActivityIndicator,
@@ -1234,7 +1235,7 @@ export default function GoalDetailsScreen() {
   ========================================================================== */
 
   return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-[#F7F3EA]">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F7F3EA]">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}

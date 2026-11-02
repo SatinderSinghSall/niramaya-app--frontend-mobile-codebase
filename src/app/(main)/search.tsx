@@ -664,7 +664,7 @@ export default function SearchScreen() {
   ========================================================================== */
 
   return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-[#F7F8F5]">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-[#F7F8F5]">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -685,7 +685,7 @@ export default function SearchScreen() {
           contentContainerStyle={{
             paddingHorizontal: 20,
             paddingTop: 12,
-            paddingBottom: 40,
+            paddingBottom: 60,
           }}
         >
           {/* ================================================================

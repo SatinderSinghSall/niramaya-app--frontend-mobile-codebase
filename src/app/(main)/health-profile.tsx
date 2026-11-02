@@ -630,7 +630,7 @@ export default function HealthProfileScreen() {
 
   return (
     <SafeAreaView
-      edges={["top", "left", "right"]}
+      edges={["top", "left", "right", "bottom"]}
       className="flex-1"
       style={{ backgroundColor: COLORS.background }}
     >
@@ -648,7 +648,7 @@ export default function HealthProfileScreen() {
         contentContainerStyle={{
           paddingHorizontal: 18,
           paddingTop: 4,
-          paddingBottom: 42,
+          paddingBottom: 60,
         }}
       >
         {/* ================================================================== */}
