@@ -4,14 +4,17 @@ import React from "react";
 import { Pressable, Text, View } from "react-native";
 
 const COLORS = {
-  surface: "#FFFFFF",
-  primary: "#4D6A50",
+  surface: "#FCFDFB",
+  primary: "#496B50",
   primaryDark: "#304B36",
-  primarySoft: "#EEF4EC",
-  text: "#263128",
-  textSecondary: "#687269",
-  muted: "#8A938B",
-  border: "#E5E8E3",
+  primarySoft: "#EDF4ED",
+  text: "#26372B",
+  textSecondary: "#737F75",
+  muted: "#929C93",
+  border: "#E1E9E0",
+  divider: "#EDF1EC",
+  accent: "#B69A67",
+  white: "#FFFFFF",
 };
 
 interface ConsultationCTAProps {
@@ -30,157 +33,182 @@ export default function ConsultationCTA({
       onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel="Talk to an Ayurvedic Consultant"
-      className={`mt-6 overflow-hidden rounded-[24px] border ${
+      accessibilityHint="Opens the Ayurvedic consultation booking screen"
+      className={`mt-6 overflow-hidden rounded-[26px] border ${
         compact ? "p-4" : "p-[18px]"
       }`}
       style={({ pressed }) => ({
         backgroundColor: COLORS.surface,
         borderColor: COLORS.border,
-        opacity: pressed ? 0.94 : 1,
-        transform: [
-          {
-            scale: pressed ? 0.995 : 1,
-          },
-        ],
+        opacity: pressed ? 0.96 : 1,
+        transform: [{ scale: pressed ? 0.99 : 1 }],
+        shadowColor: "#304B36",
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: pressed ? 0.04 : 0.07,
+        shadowRadius: 14,
+        elevation: pressed ? 2 : 3,
       })}
     >
-      {/* TOP CONTENT */}
-      <View className="flex-row items-center">
-        {/* ICON */}
+      {/* PREMIUM TOP LABEL */}
+      <View className="mb-3 flex-row items-center">
+        <View
+          className="mr-2 h-[3px] w-5 rounded-full"
+          style={{ backgroundColor: COLORS.accent }}
+        />
+
+        <Text
+          className="text-[9px] font-bold tracking-[1.5px]"
+          style={{ color: COLORS.primary }}
+        >
+          PERSONALISED AYURVEDIC CARE
+        </Text>
 
         <View
-          className={`items-center justify-center rounded-2xl ${
-            compact ? "h-11 w-11" : "h-12 w-12"
+          className="ml-auto flex-row items-center rounded-full px-2 py-1"
+          style={{ backgroundColor: COLORS.primarySoft }}
+        >
+          <Text
+            className="ml-1 text-[8px] font-semibold"
+            style={{ color: COLORS.primary }}
+          >
+            EXPERT GUIDANCE
+          </Text>
+        </View>
+      </View>
+
+      {/* MAIN CONTENT */}
+      <View className="flex-row items-center">
+        {/* CONSULTANT ICON */}
+        <View
+          className={`items-center justify-center rounded-[18px] ${
+            compact ? "h-12 w-12" : "h-[54px] w-[54px]"
           }`}
           style={{
             backgroundColor: COLORS.primarySoft,
+            borderWidth: 1,
+            borderColor: "#E2EBE1",
           }}
         >
           <Ionicons
             name="person-outline"
-            size={compact ? 20 : 21}
+            size={compact ? 21 : 24}
             color={COLORS.primary}
           />
+          <View
+            className="absolute bottom-[-3px] right-[-3px] h-[13px] w-[13px] items-center justify-center rounded-full"
+            style={{
+              backgroundColor: COLORS.primary,
+              borderWidth: 2,
+              borderColor: COLORS.surface,
+            }}
+          >
+            <Ionicons name="checkmark" size={8} color={COLORS.white} />
+          </View>
         </View>
 
-        {/* CONTENT */}
-
-        <View className="ml-3 flex-1 pr-3">
+        {/* TITLE AND DESCRIPTION */}
+        <View className="ml-3.5 flex-1 pr-2">
           <Text
             numberOfLines={2}
-            className={`font-bold tracking-[-0.15px] ${
-              compact ? "text-[13px]" : "text-[14px]"
+            className={`font-bold tracking-[-0.35px] ${
+              compact ? "text-[13px]" : "text-[15px]"
             }`}
-            style={{
-              color: COLORS.text,
-            }}
+            style={{ color: COLORS.text }}
           >
             Talk to an Ayurvedic Consultant
           </Text>
 
           <Text
-            numberOfLines={compact ? 2 : 2}
-            className="mt-1 text-[10px] leading-[15px]"
-            style={{
-              color: COLORS.textSecondary,
-            }}
+            numberOfLines={2}
+            className="mt-1 text-[10px] leading-[16px]"
+            style={{ color: COLORS.textSecondary }}
           >
-            Get personalised guidance for your wellness goals and concerns.
+            Get expert guidance tailored to your wellness goals and concerns.
           </Text>
         </View>
 
-        {/* CHEVRON */}
-
+        {/* ARROW ACTION */}
         <View
           className={`items-center justify-center rounded-full ${
-            compact ? "h-8 w-8" : "h-9 w-9"
+            compact ? "h-9 w-9" : "h-10 w-10"
           }`}
-          style={{
-            backgroundColor: COLORS.primary,
-          }}
+          style={{ backgroundColor: COLORS.primary }}
         >
           <Ionicons
-            name="chevron-forward"
-            size={compact ? 15 : 16}
-            color="#FFFFFF"
+            name="arrow-forward"
+            size={compact ? 16 : 18}
+            color={COLORS.white}
           />
         </View>
       </View>
 
-      {/* SERVICE DETAILS */}
-
+      {/* DIVIDER */}
       <View
-        className="mt-3 flex-row items-center border-t pt-3"
-        style={{
-          borderColor: "#F0F1EE",
-        }}
-      >
-        {/* ONLINE */}
+        className="my-4 h-px w-full"
+        style={{ backgroundColor: COLORS.divider }}
+      />
 
+      {/* SERVICE OPTIONS */}
+      <View className="flex-row items-center">
+        {/* ONLINE */}
         <View className="flex-row items-center">
-          <View className="h-6 w-6 items-center justify-center rounded-lg bg-emerald-50">
+          <View
+            className="h-7 w-7 items-center justify-center rounded-full"
+            style={{ backgroundColor: COLORS.primarySoft }}
+          >
             <Ionicons
               name="videocam-outline"
-              size={12}
+              size={13}
               color={COLORS.primary}
             />
           </View>
 
           <Text
             className="ml-1.5 text-[9px] font-semibold"
-            style={{
-              color: COLORS.textSecondary,
-            }}
+            style={{ color: COLORS.textSecondary }}
           >
             Online
           </Text>
         </View>
 
-        {/* DIVIDER */}
-
+        {/* SEPARATOR */}
         <View
-          className="mx-3 h-3.5 w-px"
-          style={{
-            backgroundColor: "#E5E7E4",
-          }}
+          className="mx-3 h-4 w-px"
+          style={{ backgroundColor: COLORS.border }}
         />
 
-        {/* OFFLINE */}
-
+        {/* IN-PERSON */}
         <View className="flex-row items-center">
-          <View className="h-6 w-6 items-center justify-center rounded-lg bg-emerald-50">
+          <View
+            className="h-7 w-7 items-center justify-center rounded-full"
+            style={{ backgroundColor: COLORS.primarySoft }}
+          >
             <Ionicons
               name="location-outline"
-              size={12}
+              size={13}
               color={COLORS.primary}
             />
           </View>
 
           <Text
             className="ml-1.5 text-[9px] font-semibold"
-            style={{
-              color: COLORS.textSecondary,
-            }}
+            style={{ color: COLORS.textSecondary }}
           >
             In-person
           </Text>
         </View>
 
-        {/* RIGHT LABEL */}
-
+        {/* PERSONAL CARE INDICATOR */}
         <View className="ml-auto flex-row items-center">
           <View
-            className="mr-1.5 h-1.5 w-1.5 rounded-full"
-            style={{
-              backgroundColor: "#6B8F71",
-            }}
+            className="mr-1.5 h-[7px] w-[7px] rounded-full"
+            style={{ backgroundColor: "#79A47D" }}
           />
 
           <Text
+            numberOfLines={1}
             className="text-[9px] font-medium"
-            style={{
-              color: COLORS.muted,
-            }}
+            style={{ color: COLORS.muted }}
           >
             Personalised care
           </Text>

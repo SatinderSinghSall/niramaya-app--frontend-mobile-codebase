@@ -447,81 +447,190 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-      {/* Delete account warning modal */}
-      <Modal
-        visible={deleteModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDeleteModal(false)}
-      >
-        <View className="flex-1 items-center justify-center bg-black/35 px-5">
-          <View className="w-full rounded-[26px] bg-white px-5 pb-5 pt-6">
-            <View className="h-12 w-12 items-center justify-center rounded-[15px] bg-[#F9ECEA]">
-              <Ionicons name="warning-outline" size={23} color="#A75F56" />
+      {/* Delete account – Danger Zone Modal */}
+<Modal
+  visible={deleteModal}
+  transparent
+  animationType="fade"
+  onRequestClose={() => setDeleteModal(false)}
+>
+  <View className="flex-1 items-center justify-center bg-[#171A17]/55 px-5">
+
+    {/* MODAL CONTAINER */}
+    <View
+      className="w-full overflow-hidden rounded-[27px] border border-[#EBD5D2] bg-white"
+      style={{
+        shadowColor: "#702D27",
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.18,
+        shadowRadius: 25,
+        elevation: 12,
+      }}
+    >
+
+      {/* DANGER ACCENT */}
+      <View className="h-[5px] flex-row">
+        <View className="flex-1 bg-[#9D3F38]" />
+        <View className="w-14 bg-[#C47A6F]" />
+      </View>
+
+      <View className="px-5 pb-5 pt-5">
+
+        {/* DANGER ZONE LABEL */}
+        <View className="mb-4 flex-row items-center justify-between">
+
+          <View className="flex-row items-center rounded-full border border-[#F0D9D5] bg-[#FDF3F1] px-3 py-1.5">
+            <Ionicons
+              name="alert-circle"
+              size={12}
+              color="#A4473F"
+            />
+
+            <Text className="ml-1.5 text-[9px] font-extrabold tracking-[1.4px] text-[#A4473F]">
+              DANGER ZONE
+            </Text>
+          </View>
+
+          <Text className="text-[9px] font-semibold tracking-[0.5px] text-[#B58B85]">
+            ACCOUNT ACTION
+          </Text>
+        </View>
+
+        {/* WARNING ICON */}
+        <View className="h-[53px] w-[53px] items-center justify-center rounded-[17px] border border-[#F0D8D4] bg-[#FCEFED]">
+          <Ionicons
+            name="trash-outline"
+            size={25}
+            color="#A4473F"
+          />
+        </View>
+
+        {/* TITLE */}
+        <Text className="mt-4 text-[20px] font-extrabold tracking-[-0.5px] text-[#292B29]">
+          Delete your account?
+        </Text>
+
+        {/* DESCRIPTION */}
+        <Text className="mt-2 text-[12px] leading-[20px] text-[#737873]">
+          Your Niramaya account will be deactivated and you will be signed
+          out. This action affects your account and requires confirmation.
+        </Text>
+
+        {/* WARNING INFORMATION */}
+        <View className="mt-5 overflow-hidden rounded-[17px] border border-[#EBCBC6] bg-[#FDF4F2]">
+
+          {/* WARNING HEADER */}
+          <View className="flex-row items-center border-b border-[#F1DEDA] bg-[#FAECE9] px-4 py-3">
+            <Ionicons
+              name="warning"
+              size={16}
+              color="#A4473F"
+            />
+
+            <Text className="ml-2 text-[11px] font-extrabold tracking-[0.2px] text-[#963F38]">
+              This is a sensitive account action
+            </Text>
+          </View>
+
+          {/* WARNING BODY */}
+          <View className="flex-row items-start px-4 py-3.5">
+
+            <View className="mt-0.5 h-7 w-7 items-center justify-center rounded-full bg-[#F6E3DF]">
+              <Ionicons
+                name="lock-closed-outline"
+                size={13}
+                color="#A4473F"
+              />
             </View>
 
-            <Text className="mt-4 text-[19px] font-bold tracking-[-0.2px] text-[#202722]">
-              Delete your account?
-            </Text>
-
-            <Text className="mt-2 text-[12px] leading-[19px] text-[#687169]">
-              Your Niramaya account will be deactivated and you will be signed
-              out. This action affects your account and requires confirmation.
-            </Text>
-
-            <View className="mt-4 rounded-[16px] border border-[#F0DAD7] bg-[#FDF5F3] px-4 py-3.5">
-              <View className="flex-row items-start">
-                <Ionicons
-                  name="alert-circle-outline"
-                  size={18}
-                  color="#A75F56"
-                />
-
-                <View className="ml-2.5 flex-1">
-                  <Text className="text-[12px] font-bold text-[#8F5149]">
-                    This is a sensitive account action
-                  </Text>
-
-                  <Text className="mt-1 text-[10px] leading-[16px] text-[#9A6B65]">
-                    You will need to verify your password on the next screen
-                    before your account can be deactivated.
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            <View className="mt-5 flex-row">
-              <Pressable
-                onPress={() => setDeleteModal(false)}
-                className="mr-1.5 h-[48px] flex-1 items-center justify-center rounded-[15px] bg-[#F1F3F0]"
-              >
-                <Text className="text-[12px] font-bold text-[#687169]">
-                  Cancel
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  setDeleteModal(false);
-                  router.push("/(main)/delete-account");
-                }}
-                className="ml-1.5 h-[48px] flex-1 flex-row items-center justify-center rounded-[15px] bg-[#A75F56]"
-              >
-                <Text className="text-[12px] font-extrabold text-white">
-                  Proceed
-                </Text>
-
-                <Ionicons
-                  name="arrow-forward"
-                  size={15}
-                  color="#FFFFFF"
-                  style={{ marginLeft: 7 }}
-                />
-              </Pressable>
+            <View className="ml-2.5 flex-1">
+              <Text className="text-[10px] leading-[17px] text-[#91615B]">
+                You will need to verify your password on the next screen
+                before your account can be deactivated.
+              </Text>
             </View>
           </View>
         </View>
-      </Modal>
+
+        {/* ACTION BUTTONS */}
+        <View className="mt-5 flex-row">
+
+          {/* CANCEL */}
+          <Pressable
+            onPress={() => setDeleteModal(false)}
+            accessibilityRole="button"
+            className="mr-1.5 h-[49px] flex-1 flex-row items-center justify-center rounded-[15px] border border-[#E6E9E5] bg-[#F4F5F3]"
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.75 : 1,
+            })}
+          >
+            <Ionicons
+              name="close-circle-outline"
+              size={15}
+              color="#687169"
+            />
+
+            <Text className="ml-1.5 text-[12px] font-bold text-[#626B63]">
+              Cancel
+            </Text>
+          </Pressable>
+
+          {/* PROCEED */}
+          <Pressable
+            onPress={() => {
+              setDeleteModal(false);
+              router.push("/(main)/delete-account");
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Proceed to account deactivation"
+            className="ml-1.5 h-[49px] flex-1 flex-row items-center justify-center rounded-[15px] border border-[#963D36] bg-[#A4473F]"
+            style={({ pressed }) => ({
+              backgroundColor: pressed ? "#84352F" : "#A4473F",
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+              shadowColor: "#963D36",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.18,
+              shadowRadius: 7,
+              elevation: 3,
+            })}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={14}
+              color="#FFFFFF"
+            />
+
+            <Text className="ml-2 text-[12px] font-extrabold text-white">
+              Proceed
+            </Text>
+
+            <Ionicons
+              name="arrow-forward"
+              size={14}
+              color="#FFFFFF"
+              style={{ marginLeft: 7 }}
+            />
+          </Pressable>
+
+        </View>
+
+        {/* FOOTER NOTE */}
+        <View className="mt-4 flex-row items-center justify-center">
+          <Ionicons
+            name="shield-checkmark-outline"
+            size={12}
+            color="#929B93"
+          />
+
+          <Text className="ml-1.5 text-[9px] font-medium text-[#929B93]">
+            Your account requires password verification
+          </Text>
+        </View>
+
+      </View>
+    </View>
+  </View>
+</Modal>
     </SafeAreaView>
   );
 }
