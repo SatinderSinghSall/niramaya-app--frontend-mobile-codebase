@@ -20,6 +20,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import useToast from "@/components/toast/useToast";
+
 import {
   completeGoal,
   deleteGoal,
@@ -800,6 +802,8 @@ function GoalLoadError({
 ============================================================================ */
 
 export default function GoalDetailsScreen() {
+  const toast = useToast();
+
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [goal, setGoal] = useState<Goal | null>(null);
@@ -1020,11 +1024,19 @@ export default function GoalDetailsScreen() {
 
       setProgressValue(String(updated.currentValue ?? 0));
 
+      toast.success("Goal Updated", "Your goal details have been saved.");
+
       setEditing(false);
       setShowStartPicker(false);
       setShowTargetPicker(false);
     } catch (error: any) {
-      setEditError(getErrorMessage(error, "Unable to save your changes."));
+      const errorMessage = getErrorMessage(
+        error,
+        "Unable to save your changes.",
+      );
+
+      setEditError(errorMessage);
+      toast.error("Update Failed", errorMessage);
     } finally {
       setSaving(false);
     }
@@ -1072,9 +1084,14 @@ export default function GoalDetailsScreen() {
 
       setProgressValue(String(updated.currentValue ?? 0));
 
+      toast.success("Progress Updated", "Your goal progress has been updated.");
+
       Keyboard.dismiss();
     } catch (error: any) {
-      setProgressError(getErrorMessage(error, "Unable to update progress."));
+      const errorMessage = getErrorMessage(error, "Unable to update progress.");
+
+      setProgressError(errorMessage);
+      toast.error("Progress Update Failed", errorMessage);
     } finally {
       setSaving(false);
     }
@@ -1102,10 +1119,19 @@ export default function GoalDetailsScreen() {
             const updated = await completeGoal(goal._id);
 
             setGoal(updated);
-          } catch (error: any) {
-            setActionError(
-              getErrorMessage(error, "Unable to complete this goal."),
+
+            toast.success(
+              "Goal Completed",
+              "Congratulations on completing your goal!",
             );
+          } catch (error: any) {
+            const errorMessage = getErrorMessage(
+              error,
+              "Unable to complete this goal.",
+            );
+
+            setActionError(errorMessage);
+            toast.error("Completion Failed", errorMessage);
           } finally {
             setSaving(false);
           }
@@ -1124,8 +1150,13 @@ export default function GoalDetailsScreen() {
       const updated = await pauseGoal(goal._id);
 
       setGoal(updated);
+
+      toast.success("Goal Paused", "Your goal has been paused.");
     } catch (error: any) {
-      setActionError(getErrorMessage(error, "Unable to pause this goal."));
+      const errorMessage = getErrorMessage(error, "Unable to pause this goal.");
+
+      setActionError(errorMessage);
+      toast.error("Pause Failed", errorMessage);
     } finally {
       setSaving(false);
     }
@@ -1141,8 +1172,16 @@ export default function GoalDetailsScreen() {
       const updated = await resumeGoal(goal._id);
 
       setGoal(updated);
+
+      toast.success("Goal Resumed", "Your goal is active again.");
     } catch (error: any) {
-      setActionError(getErrorMessage(error, "Unable to resume this goal."));
+      const errorMessage = getErrorMessage(
+        error,
+        "Unable to resume this goal.",
+      );
+
+      setActionError(errorMessage);
+      toast.error("Resume Failed", errorMessage);
     } finally {
       setSaving(false);
     }
@@ -1169,11 +1208,17 @@ export default function GoalDetailsScreen() {
 
               await deleteGoal(goal._id);
 
+              toast.success("Goal Deleted", "Your goal has been removed.");
+
               router.replace("/(main)/goals");
             } catch (error: any) {
-              setActionError(
-                getErrorMessage(error, "Unable to delete this goal."),
+              const errorMessage = getErrorMessage(
+                error,
+                "Unable to delete this goal.",
               );
+
+              setActionError(errorMessage);
+              toast.error("Delete Failed", errorMessage);
 
               setSaving(false);
             }

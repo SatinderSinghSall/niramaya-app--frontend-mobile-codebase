@@ -21,8 +21,11 @@ import { PasswordInput } from "@/components/forms/PasswordInput";
 import { useAuth } from "@/context/AuthContext";
 import { getApiErrorMessage } from "@/utils/apiError";
 
+import useToast from "@/components/toast/useToast";
+
 export default function SignupScreen() {
   const { register } = useAuth();
+  const toast = useToast();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -162,14 +165,21 @@ export default function SignupScreen() {
         password,
       });
 
+      toast.success(
+        "Account Created!",
+        "Welcome to Niramaya. Let's get started with your wellness journey.",
+      );
+
       router.replace("/(onboarding)/about-you");
     } catch (error) {
-      setGeneralError(
-        getApiErrorMessage(
-          error,
-          "Unable to create your account. Please try again.",
-        ),
+      const errorMessage = getApiErrorMessage(
+        error,
+        "Unable to create your account. Please try again.",
       );
+
+      setGeneralError(errorMessage);
+
+      toast.error("Sign Up Failed", errorMessage);
     } finally {
       setLoading(false);
     }

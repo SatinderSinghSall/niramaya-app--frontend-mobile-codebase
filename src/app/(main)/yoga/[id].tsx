@@ -30,6 +30,8 @@ import { ExploreItem } from "@/types/explore";
 
 import { API_BASE_URL } from "@/services/api";
 
+import useToast from "@/components/toast/useToast";
+
 function getYogaImageUrl(value?: string | null) {
   if (!value) return "";
 
@@ -1264,6 +1266,8 @@ function QuoteCard() {
 ========================================================= */
 
 export default function YogaDetailScreen() {
+  const toast = useToast();
+
   const params = useLocalSearchParams<{
     id?: string | string[];
   }>();
@@ -1286,7 +1290,7 @@ export default function YogaDetailScreen() {
   ======================================================= */
 
   const loadYoga = useCallback(
-    async (showSkeleton = true) => {
+    async (showSkeleton = true, showRefreshToast = false) => {
       if (!id) {
         setError("This Yoga practice could not be identified.");
         setLoading(false);
@@ -1308,6 +1312,13 @@ export default function YogaDetailScreen() {
 
         setItem(data as YogaDetailData);
 
+        if (showRefreshToast) {
+          toast.success(
+            "Yoga Practice Updated",
+            "The Yoga practice details have been refreshed successfully.",
+          );
+        }
+
         /*
          * View tracking should never prevent
          * the detail page from loading.
@@ -1316,17 +1327,22 @@ export default function YogaDetailScreen() {
       } catch (err: any) {
         console.error("Yoga detail loading error:", err);
 
-        setError(
+        const errorMessage =
           err?.response?.data?.message ||
-            err?.message ||
-            "Unable to load this Yoga practice.",
-        );
+          err?.message ||
+          "Unable to refresh this Yoga practice.";
+
+        setError(errorMessage);
+
+        if (showRefreshToast) {
+          toast.error("Refresh Failed", errorMessage);
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [id],
+    [id, toast],
   );
 
   useEffect(() => {
@@ -1335,7 +1351,7 @@ export default function YogaDetailScreen() {
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    loadYoga(false);
+    loadYoga(false, true);
   }, [loadYoga]);
 
   /* =======================================================

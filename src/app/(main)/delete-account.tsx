@@ -24,6 +24,8 @@ import { router } from "expo-router";
 
 import { deleteAccount } from "../../services/profile.service";
 
+import useToast from "@/components/toast/useToast";
+
 /**
  * ===============================================================
  * COLORS
@@ -45,6 +47,8 @@ const BACKGROUND = "#F5F7F4";
  */
 
 export default function DeleteAccountScreen() {
+  const toast = useToast();
+
   const insets = useSafeAreaInsets();
 
   const [password, setPassword] = useState("");
@@ -128,6 +132,11 @@ export default function DeleteAccountScreen() {
         password: password.trim(),
       });
 
+      toast.success(
+        "Account Deactivated",
+        "Your Niramaya account has been deactivated successfully.",
+      );
+
       Alert.alert(
         "Account deactivated",
         "Your Niramaya account has been deactivated successfully.",
@@ -146,6 +155,12 @@ export default function DeleteAccountScreen() {
         data: error?.response?.data,
         message: error?.message,
       });
+
+      const errorMessage =
+        error?.response?.data?.message ??
+        "The password may be incorrect. Please check your details and try again.";
+
+      toast.error("Account Deactivation Failed", errorMessage);
 
       Alert.alert(
         "Couldn't deactivate account",

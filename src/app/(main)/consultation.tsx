@@ -22,6 +22,8 @@ import {
 import { getConsultations } from "../../services/consultation.service";
 import type { Consultation } from "../../types/consultation";
 
+import useToast from "@/components/toast/useToast";
+
 /* ============================================================================
    TYPES
 ============================================================================ */
@@ -607,6 +609,8 @@ function ConsultationSkeleton() {
 ============================================================================ */
 
 export default function ConsultationScreen() {
+  const toast = useToast();
+
   const insets = useSafeAreaInsets();
 
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -631,38 +635,53 @@ export default function ConsultationScreen() {
     string | null
   >(null);
 
-  const loadConsultations = useCallback(async (showLoader = true) => {
-    try {
-      if (showLoader) {
-        setLoading(true);
+  const loadConsultations = useCallback(
+    async (showLoader = true, showRefreshToast = false) => {
+      try {
+        if (showLoader) {
+          setLoading(true);
+        }
+
+        setError("");
+
+        const response = await getConsultations({
+          page: 1,
+          limit: 20,
+        });
+
+        setConsultations(
+          Array.isArray(response?.consultations) ? response.consultations : [],
+        );
+
+        if (showRefreshToast) {
+          toast.success(
+            "Consultations Updated",
+            "Your consultations have been refreshed successfully.",
+          );
+        }
+      } catch (err: any) {
+        console.log("CONSULTATION DASHBOARD ERROR", {
+          status: err?.response?.status,
+          url: err?.config?.url,
+          baseURL: err?.config?.baseURL,
+          message: err?.message,
+          response: err?.response?.data,
+        });
+
+        const errorMessage = getErrorMessage(err);
+        setError(errorMessage);
+
+        if (showRefreshToast) {
+          toast.error("Refresh Failed", errorMessage);
+        }
+      } finally {
+        if (showLoader) {
+          setLoading(false);
+        }
       }
-
-      setError("");
-
-      const response = await getConsultations({
-        page: 1,
-        limit: 20,
-      });
-
-      setConsultations(
-        Array.isArray(response?.consultations) ? response.consultations : [],
-      );
-    } catch (err: any) {
-      console.log("CONSULTATION DASHBOARD ERROR", {
-        status: err?.response?.status,
-        url: err?.config?.url,
-        baseURL: err?.config?.baseURL,
-        message: err?.message,
-        response: err?.response?.data,
-      });
-
-      setError(getErrorMessage(err));
-    } finally {
-      if (showLoader) {
-        setLoading(false);
-      }
-    }
-  }, []);
+    },
+    [toast],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -735,7 +754,7 @@ export default function ConsultationScreen() {
   const handleRefresh = async () => {
     try {
       setRefreshing(true);
-      await loadConsultations(false);
+      await loadConsultations(false, true);
     } finally {
       setRefreshing(false);
     }

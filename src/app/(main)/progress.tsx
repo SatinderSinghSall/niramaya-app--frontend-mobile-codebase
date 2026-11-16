@@ -21,6 +21,8 @@ import {
 } from "@/services/progress.service";
 import { ProgressEntry, ProgressSummary } from "@/types/progress";
 
+import useToast from "@/components/toast/useToast";
+
 const COLORS = {
   background: "#F7F5EF",
   surface: "#FFFFFF",
@@ -435,6 +437,8 @@ const EmptyHistory = ({
 );
 
 export default function ProgressScreen() {
+  const toast = useToast();
+
   const [summary, setSummary] = useState<ProgressSummary | null>(null);
   const [history, setHistory] = useState<ProgressEntry[]>([]);
 
@@ -527,18 +531,31 @@ export default function ProgressScreen() {
         setPage(pagination?.page ?? requestedPage);
         setTotalPages(Math.max(pagination?.totalPages ?? 1, 1));
         setTotalEntries(pagination?.total ?? 0);
+
+        if (showRefreshing) {
+          toast.success(
+            "Progress Updated",
+            "Your wellness progress has been refreshed.",
+          );
+        }
       } catch (err: any) {
         console.error("Progress loading error:", err);
-        setError(
+
+        const errorMessage =
           err?.response?.data?.message ||
-            "Unable to load your progress right now.",
-        );
+          "Unable to load your progress right now.";
+
+        setError(errorMessage);
+
+        if (showRefreshing) {
+          toast.error("Refresh Failed", errorMessage);
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [dateFilter],
+    [dateFilter, toast],
   );
 
   useFocusEffect(

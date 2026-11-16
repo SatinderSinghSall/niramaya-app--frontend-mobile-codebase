@@ -21,8 +21,11 @@ import { Input } from "@/components/forms/Input";
 import { PasswordInput } from "@/components/forms/PasswordInput";
 import { useAuth } from "@/context/AuthContext";
 
+import useToast from "@/components/toast/useToast";
+
 export default function LoginScreen() {
   const { login } = useAuth();
+  const toast = useToast();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -118,11 +121,21 @@ export default function LoginScreen() {
         password,
       });
 
+      toast.success(
+        "Welcome Back!",
+        "You have successfully signed in to Niramaya.",
+      );
+
       router.replace("/(main)/home");
     } catch (error) {
-      setGeneralError(
-        getApiErrorMessage(error, "Unable to sign in. Please try again."),
+      const errorMessage = getApiErrorMessage(
+        error,
+        "Unable to sign in. Please try again.",
       );
+
+      setGeneralError(errorMessage);
+
+      toast.error("Sign In Failed", errorMessage);
     } finally {
       setLoading(false);
     }

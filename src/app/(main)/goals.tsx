@@ -14,10 +14,9 @@ import {
 } from "react-native";
 
 import { router, useFocusEffect } from "expo-router";
-
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { Ionicons } from "@expo/vector-icons";
+import useToast from "@/components/toast/useToast";
 
 import { getGoals } from "@/services/goal.service";
 
@@ -780,6 +779,8 @@ function GoalsError({
 ============================================================================ */
 
 export default function GoalsScreen() {
+  const toast = useToast();
+
   const [goals, setGoals] = useState<Goal[]>([]);
 
   const [filter, setFilter] = useState<Filter>("all");
@@ -837,34 +838,49 @@ export default function GoalsScreen() {
      LOAD
   ========================================================================== */
 
-  const loadGoals = useCallback(async (showRefreshing = false) => {
-    try {
-      if (showRefreshing) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+  const loadGoals = useCallback(
+    async (showRefreshing = false) => {
+      try {
+        if (showRefreshing) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
 
-      setError("");
+        setError("");
 
-      const data = await getGoals();
+        const data = await getGoals();
 
-      setGoals(data);
+        setGoals(data);
 
-      setVisibleCount(PAGE_SIZE);
-    } catch (err: any) {
-      console.error("Goals loading error:", err);
+        setVisibleCount(PAGE_SIZE);
 
-      setError(
-        err?.response?.data?.message ||
+        if (showRefreshing) {
+          toast.success(
+            "Goals Updated",
+            "Your goals have been refreshed successfully.",
+          );
+        }
+      } catch (err: any) {
+        console.error("Goals loading error:", err);
+
+        const errorMessage =
+          err?.response?.data?.message ||
           err?.message ||
-          "Unable to load your goals.",
-      );
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+          "Unable to load your goals.";
+
+        setError(errorMessage);
+
+        if (showRefreshing) {
+          toast.error("Refresh Failed", errorMessage);
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [toast],
+  );
 
   /* ==========================================================================
      REFRESH ON FOCUS

@@ -29,6 +29,8 @@ import type {
   ConsultationStatus,
 } from "../../types/consultation";
 
+import useToast from "@/components/toast/useToast";
+
 const COLORS = {
   background: "#F5F7F4",
 
@@ -813,6 +815,8 @@ function ConsultationSkeleton() {
 }
 
 export default function ConsultationHistoryScreen() {
+  const toast = useToast();
+
   const insets = useSafeAreaInsets();
 
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -867,7 +871,7 @@ export default function ConsultationHistoryScreen() {
   }, []);
 
   const loadConsultations = useCallback(
-    async (targetPage = 1, showLoader = true) => {
+    async (targetPage = 1, showLoader = true, showRefreshToast = false) => {
       try {
         if (showLoader) {
           setLoading(true);
@@ -877,9 +881,7 @@ export default function ConsultationHistoryScreen() {
 
         const response = await getConsultations({
           page: targetPage,
-
           limit: LIMIT,
-
           ...(statusFilter !== "all"
             ? {
                 status: statusFilter,
@@ -892,34 +894,38 @@ export default function ConsultationHistoryScreen() {
           : [];
 
         setConsultations(items);
-
         setPage(response?.pagination?.page ?? targetPage);
-
         setTotalPages(response?.pagination?.totalPages ?? 1);
-
         setTotalResults(response?.pagination?.total ?? items.length);
+
+        if (showRefreshToast) {
+          toast.success(
+            "Consultations Updated",
+            "Your consultation history has been refreshed successfully.",
+          );
+        }
       } catch (err: any) {
         console.log("CONSULTATION HISTORY LOAD ERROR", {
           status: err?.response?.status,
-
           url: err?.config?.url,
-
           baseURL: err?.config?.baseURL,
-
           message: err?.message,
-
           response: err?.response?.data,
         });
 
-        setError(getErrorMessage(err));
+        const errorMessage = getErrorMessage(err);
+        setError(errorMessage);
+
+        if (showRefreshToast) {
+          toast.error("Refresh Failed", errorMessage);
+        }
       } finally {
         if (showLoader) {
           setLoading(false);
         }
       }
     },
-
-    [statusFilter],
+    [statusFilter, toast],
   );
 
   useEffect(() => {
@@ -1010,8 +1016,7 @@ export default function ConsultationHistoryScreen() {
   const handleRefresh = async () => {
     try {
       setRefreshing(true);
-
-      await loadConsultations(page, false);
+      await loadConsultations(page, false, true);
     } finally {
       setRefreshing(false);
     }

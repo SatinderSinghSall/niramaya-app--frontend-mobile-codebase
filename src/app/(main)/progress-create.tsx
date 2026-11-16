@@ -6,6 +6,8 @@ import { router, useLocalSearchParams } from "expo-router";
 
 import { useEffect, useMemo, useState } from "react";
 
+import useToast from "@/components/toast/useToast";
+
 import {
   ActivityIndicator,
   Keyboard,
@@ -314,6 +316,8 @@ function ValidationModal({
 }
 
 export default function ProgressCreateScreen() {
+  const toast = useToast();
+
   const params = useLocalSearchParams<{
     id?: string;
   }>();
@@ -672,8 +676,18 @@ export default function ProgressCreateScreen() {
 
       if (editingId) {
         await updateProgress(editingId, payload);
+
+        toast.success(
+          "Progress Updated!",
+          "Your progress entry has been updated successfully.",
+        );
       } else {
         await createProgress(payload);
+
+        toast.success(
+          "Progress Saved!",
+          "Your daily wellness check-in has been saved successfully.",
+        );
       }
 
       clearFormData();
@@ -682,10 +696,17 @@ export default function ProgressCreateScreen() {
     } catch (err: any) {
       console.error("Progress save error:", err);
 
-      setError(
+      const errorMessage =
         err?.response?.data?.message ||
-          "Unable to save your progress. Please try again.",
-      );
+        "Unable to save your progress. Please try again.";
+
+      setError(errorMessage);
+
+      if (editingId) {
+        toast.error("Update Failed", errorMessage);
+      } else {
+        toast.error("Save Failed", errorMessage);
+      }
     } finally {
       setSaving(false);
     }

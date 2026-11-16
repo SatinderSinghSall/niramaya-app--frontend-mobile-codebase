@@ -19,6 +19,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useDrawer } from "./DrawerContext";
 import DrawerItem from "./DrawerItem";
 
+import useToast from "@/components/toast/useToast";
+
 /* ==========================================================================
    COLORS
 ========================================================================== */
@@ -160,6 +162,7 @@ function LogoutConfirmation({
 export default function AppDrawer() {
   const { isDrawerOpen, closeDrawer } = useDrawer();
   const { user, logout } = useAuth();
+  const toast = useToast();
   const pathname = usePathname();
 
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
@@ -195,14 +198,27 @@ export default function AppDrawer() {
 
     try {
       await logout();
+
+      toast.success(
+        "Logged Out Successfully",
+        "You have been safely logged out of Niramaya.",
+      );
     } catch (error) {
       console.error("Logout error:", error);
+
+      toast.error(
+        "Logout Failed",
+        "Something went wrong while logging out. Please try again.",
+      );
+
+      return;
     } finally {
       setShowLogoutConfirmation(false);
       closeDrawer();
       setLogoutLoading(false);
-      router.replace("/(public)/landing");
     }
+
+    router.replace("/(public)/landing");
   };
 
   return (

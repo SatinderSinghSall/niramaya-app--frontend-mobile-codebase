@@ -31,6 +31,8 @@ import AnnouncementDetailSheet from "@/components/announcements/AnnouncementDeta
 import { getActiveAnnouncements } from "@/services/announcement.service";
 import type { Announcement, AnnouncementType } from "@/types/announcement";
 
+import useToast from "@/components/toast/useToast";
+
 type FilterType = "all" | AnnouncementType;
 
 const FILTERS: {
@@ -354,6 +356,8 @@ function AnnouncementStats({
 ========================================================================== */
 
 export default function AnnouncementsScreen() {
+  const toast = useToast();
+
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   const [selectedAnnouncement, setSelectedAnnouncement] =
@@ -377,31 +381,45 @@ export default function AnnouncementsScreen() {
      LOAD ANNOUNCEMENTS
   ========================================================================== */
 
-  const loadAnnouncements = useCallback(async () => {
-    try {
-      setError("");
+  const loadAnnouncements = useCallback(
+    async (showRefreshing = false) => {
+      try {
+        setError("");
 
-      const data = await getActiveAnnouncements();
+        const data = await getActiveAnnouncements();
 
-      const sorted = [...data].sort(
-        (a, b) =>
-          new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
-      );
+        const sorted = [...data].sort(
+          (a, b) =>
+            new Date(b.startDate).getTime() - new Date(a.startDate).getTime(),
+        );
 
-      setAnnouncements(sorted);
-    } catch (err) {
-      console.error("Failed to load announcements:", err);
+        setAnnouncements(sorted);
 
-      const message =
-        err instanceof Error ? err.message : "Unable to load announcements.";
+        if (showRefreshing) {
+          toast.success(
+            "Announcements Updated",
+            "Latest announcements have been refreshed successfully.",
+          );
+        }
+      } catch (err) {
+        console.error("Failed to load announcements:", err);
 
-      setError(message);
-      setAnnouncements([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+        const message =
+          err instanceof Error ? err.message : "Unable to load announcements.";
+
+        setError(message);
+        setAnnouncements([]);
+
+        if (showRefreshing) {
+          toast.error("Refresh Failed", message);
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [toast],
+  );
 
   useEffect(() => {
     loadAnnouncements();
@@ -413,7 +431,7 @@ export default function AnnouncementsScreen() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadAnnouncements();
+    await loadAnnouncements(true);
   }, [loadAnnouncements]);
 
   /* ==========================================================================

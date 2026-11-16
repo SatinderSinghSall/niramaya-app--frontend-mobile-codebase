@@ -28,6 +28,8 @@ import { CategoryItem, ExploreItem } from "@/types/explore";
 
 import ExploreContentCard from "@/components/explore/ExploreContentCard";
 
+import useToast from "@/components/toast/useToast";
+
 /* -------------------------------------------------------------------------- */
 
 /* Colors                                                                     */
@@ -663,6 +665,8 @@ function AyurvedaEmptyState({ searched }: { searched: boolean }) {
 /* -------------------------------------------------------------------------- */
 
 export default function AyurvedaScreen() {
+  const toast = useToast();
+
   const PAGE_SIZE = 8;
 
   const [items, setItems] = useState<ExploreItem[]>([]);
@@ -692,6 +696,7 @@ export default function AyurvedaScreen() {
       category = selectedCategory,
       query = search,
       showLoader = false,
+      showRefreshing = false,
     ) => {
       try {
         if (showLoader) {
@@ -715,20 +720,33 @@ export default function AyurvedaScreen() {
         setTotalPages(ayurvedaResult.pagination.totalPages);
         setTotalItems(ayurvedaResult.pagination.total);
         setCategories(categoryData);
+
+        if (showRefreshing) {
+          toast.success(
+            "Ayurveda Updated",
+            "Ayurveda content has been refreshed successfully.",
+          );
+        }
       } catch (err: any) {
         console.error("Ayurveda loading error:", err);
-        setError(
+
+        const errorMessage =
           err?.response?.data?.message ||
-            err?.message ||
-            "Unable to load Ayurveda content.",
-        );
+          err?.message ||
+          "Unable to load Ayurveda content.";
+
+        setError(errorMessage);
+
+        if (showRefreshing) {
+          toast.error("Refresh Failed", errorMessage);
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
         setRetrying(false);
       }
     },
-    [selectedCategory, search],
+    [selectedCategory, search, toast],
   );
 
   /* ------------------------------------------------------------------------ */
@@ -769,7 +787,7 @@ export default function AyurvedaScreen() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadAyurveda(1, selectedCategory, search, false);
+    await loadAyurveda(1, selectedCategory, search, false, true);
   };
 
   const handleRetry = async () => {

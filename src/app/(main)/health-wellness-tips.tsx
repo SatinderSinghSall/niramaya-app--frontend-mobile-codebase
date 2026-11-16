@@ -33,6 +33,8 @@ import HealthWellnessSkeleton from "../../components/healthWellness/HealthWellne
 import HealthWellnessErrorState from "../../components/healthWellness/HealthWellnessErrorState";
 import HealthWellnessDetailSheet from "../../components/healthWellness/HealthWellnessDetailSheet";
 
+import useToast from "@/components/toast/useToast";
+
 const ITEMS_PER_PAGE = 8;
 
 const categories: {
@@ -96,6 +98,7 @@ function formatCategory(value: string) {
 
 export default function HealthWellnessTipsScreen() {
   const router = useRouter();
+  const toast = useToast();
 
   const [tips, setTips] = useState<HealthWellnessTip[]>([]);
 
@@ -161,10 +164,26 @@ export default function HealthWellnessTipsScreen() {
         if (currentPage === 1) {
           setFeaturedTips(Array.isArray(featuredResult) ? featuredResult : []);
         }
+
+        if (isRefresh) {
+          toast.success(
+            "Wellness Tips Updated",
+            "Health and wellness tips have been refreshed successfully.",
+          );
+        }
       } catch (err) {
         console.error("Failed to load health wellness tips:", err);
 
-        setError("We couldn't load the wellness content right now.");
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "We couldn't load the wellness content right now.";
+
+        setError(errorMessage);
+
+        if (isRefresh) {
+          toast.error("Refresh Failed", errorMessage);
+        }
 
         if (currentPage === 1) {
           setTips([]);
@@ -175,7 +194,7 @@ export default function HealthWellnessTipsScreen() {
         setRefreshing(false);
       }
     },
-    [selectedCategory, searchQuery, currentPage],
+    [selectedCategory, searchQuery, currentPage, toast],
   );
 
   useFocusEffect(

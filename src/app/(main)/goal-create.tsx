@@ -25,6 +25,8 @@ import { createGoal } from "@/services/goal.service";
 import { GOAL_CATEGORIES } from "@/constants/goals";
 import { GoalCategory } from "@/types/goal";
 
+import useToast from "@/components/toast/useToast";
+
 /* ==========================================================================
    TYPES
 ========================================================================== */
@@ -389,6 +391,8 @@ function DatePickerSheet({
 ========================================================================== */
 
 export default function CreateGoalScreen() {
+  const toast = useToast();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<GoalCategory>("general_wellbeing");
@@ -600,6 +604,8 @@ export default function CreateGoalScreen() {
         targetDate: targetDate ? targetDate.toISOString() : undefined,
       });
 
+      toast.success("Goal Created!", "Your new wellness goal has been added.");
+
       router.replace({
         pathname: "/(main)/goals/[id]",
         params: {
@@ -608,7 +614,12 @@ export default function CreateGoalScreen() {
       });
     } catch (error: any) {
       console.error("Create goal error:", error);
-      setMainError(getErrorMessage(error));
+
+      const errorMessage = getErrorMessage(error);
+
+      setMainError(errorMessage);
+
+      toast.error("Goal Creation Failed", errorMessage);
     } finally {
       setSaving(false);
     }

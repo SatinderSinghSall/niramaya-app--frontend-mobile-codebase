@@ -32,6 +32,8 @@ import { UserProfile } from "../../../types/profile";
 
 import { useAuth } from "../../../context/AuthContext";
 
+import useToast from "@/components/toast/useToast";
+
 const COLORS = {
   background: "#F5F7F4",
 
@@ -111,6 +113,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
 
   const { logout } = useAuth();
+  const toast = useToast();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
@@ -201,17 +204,21 @@ export default function ProfileScreen() {
 
       setLogoutModalVisible(false);
 
+      toast.success(
+        "Logged Out Successfully",
+        "You have been safely logged out of Niramaya.",
+      );
+
       router.replace("/(public)/login");
     } catch (err) {
       console.error("Logout failed:", err);
 
-      setLoggingOut(false);
-
-      Alert.alert(
-        "Couldn't log out",
-
+      toast.error(
+        "Logout Failed",
         "Something went wrong while logging out. Please try again.",
       );
+
+      setLoggingOut(false);
     }
   };
 

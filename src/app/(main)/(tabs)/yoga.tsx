@@ -32,6 +32,8 @@ import { CategoryItem, ExploreItem, RecommendationItem } from "@/types/explore";
 
 import { API_BASE_URL } from "@/services/api";
 
+import useToast from "@/components/toast/useToast";
+
 /* -------------------------------------------------------------------------- */
 /* Colors                                                                     */
 /* -------------------------------------------------------------------------- */
@@ -964,6 +966,8 @@ function PaginationFooter({
 /* -------------------------------------------------------------------------- */
 
 export default function YogaScreen() {
+  const toast = useToast();
+
   const [items, setItems] = useState<ExploreItem[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>(
     [],
@@ -1036,6 +1040,7 @@ export default function YogaScreen() {
         search?: string;
         difficulty?: string | null;
         showLoader?: boolean;
+        showRefreshing?: boolean;
       },
     ) => {
       try {
@@ -1069,23 +1074,35 @@ export default function YogaScreen() {
 
         setItems(result.items);
         setPagination(result.pagination);
+
+        if (options?.showRefreshing) {
+          toast.success(
+            "Yoga Updated",
+            "Yoga practices have been refreshed successfully.",
+          );
+        }
       } catch (err: any) {
         console.error("Yoga loading error:", err);
 
         const serverMessage = err?.response?.data?.message;
 
-        setError(
+        const errorMessage =
           typeof serverMessage === "string" && serverMessage.trim()
             ? serverMessage.trim()
-            : "We couldn't load yoga practices right now. Please check your connection and try again.",
-        );
+            : "We couldn't load yoga practices right now. Please check your connection and try again.";
+
+        setError(errorMessage);
+
+        if (options?.showRefreshing) {
+          toast.error("Refresh Failed", errorMessage);
+        }
       } finally {
         setLoading(false);
         setLoadingMore(false);
         setRefreshing(false);
       }
     },
-    [search, selectedCategory, selectedDifficulty],
+    [search, selectedCategory, selectedDifficulty, toast],
   );
 
   /* ---------------------------------------------------------------------- */
@@ -1206,6 +1223,7 @@ export default function YogaScreen() {
         search,
         difficulty: selectedDifficulty,
         showLoader: false,
+        showRefreshing: true,
       }),
     ]);
   };

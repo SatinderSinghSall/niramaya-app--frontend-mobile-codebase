@@ -28,6 +28,8 @@ import type {
   CreateConsultationPayload,
 } from "../../types/consultation";
 
+import useToast from "@/components/toast/useToast";
+
 const COLORS = {
   background: "#F7F5EF",
 
@@ -151,6 +153,8 @@ const getErrorMessage = (error: any) => {
 };
 
 export default function ConsultationBookScreen() {
+  const toast = useToast();
+
   const [consultationType, setConsultationType] =
     useState<ConsultationType>("online");
 
@@ -311,6 +315,11 @@ export default function ConsultationBookScreen() {
 
       const consultationId = createdConsultation._id;
 
+      toast.success(
+        "Consultation Requested!",
+        "Your consultation request has been submitted successfully.",
+      );
+
       setConsultationType("online");
       setPreferredDate(getTomorrow());
       setIosDateDraft(getTomorrow());
@@ -334,7 +343,13 @@ export default function ConsultationBookScreen() {
       });
     } catch (error: any) {
       console.log("Create consultation error:", error);
-      setSubmitError(getErrorMessage(error));
+
+      const errorMessage = getErrorMessage(error);
+
+      setSubmitError(errorMessage);
+
+      toast.error("Request Failed", errorMessage);
+
       setSaving(false);
     }
   };

@@ -19,6 +19,8 @@ import { router, useFocusEffect } from "expo-router";
 
 import { Ionicons } from "@expo/vector-icons";
 
+import useToast from "@/components/toast/useToast";
+
 import { API_BASE_URL } from "@/services/api";
 
 import {
@@ -1054,6 +1056,8 @@ function ProgressExploreCard() {
 /* ========================================================================== */
 
 export default function ExploreScreen() {
+  const toast = useToast();
+
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>(
     [],
   );
@@ -1084,46 +1088,61 @@ export default function ExploreScreen() {
   /* LOAD                                                                     */
   /* ======================================================================== */
 
-  const loadExplore = useCallback(async (showLoader = false) => {
-    try {
-      if (showLoader) {
-        setLoading(true);
-      }
+  const loadExplore = useCallback(
+    async (showLoader = false) => {
+      try {
+        if (showLoader) {
+          setLoading(true);
+        }
 
-      setError("");
+        setError("");
 
-      const [
-        recommendationData,
-        yogaData,
-        ayurvedaData,
-        yogaCategoryData,
-        ayurvedaCategoryData,
-      ] = await Promise.all([
-        getRecommendations("all", 10),
-        getFeaturedYoga(),
-        getFeaturedAyurveda(),
-        getYogaCategories(),
-        getAyurvedaCategories(),
-      ]);
+        const [
+          recommendationData,
+          yogaData,
+          ayurvedaData,
+          yogaCategoryData,
+          ayurvedaCategoryData,
+        ] = await Promise.all([
+          getRecommendations("all", 10),
+          getFeaturedYoga(),
+          getFeaturedAyurveda(),
+          getYogaCategories(),
+          getAyurvedaCategories(),
+        ]);
 
-      setRecommendations(recommendationData);
-      setFeaturedYoga(yogaData);
-      setFeaturedAyurveda(ayurvedaData);
-      setYogaCategories(yogaCategoryData);
-      setAyurvedaCategories(ayurvedaCategoryData);
-    } catch (err: any) {
-      console.error("Explore loading error:", err);
+        setRecommendations(recommendationData);
+        setFeaturedYoga(yogaData);
+        setFeaturedAyurveda(ayurvedaData);
+        setYogaCategories(yogaCategoryData);
+        setAyurvedaCategories(ayurvedaCategoryData);
 
-      setError(
-        err?.response?.data?.message ||
+        if (refreshing) {
+          toast.success(
+            "Explore Updated",
+            "Explore content has been refreshed successfully.",
+          );
+        }
+      } catch (err: any) {
+        console.error("Explore loading error:", err);
+
+        const errorMessage =
+          err?.response?.data?.message ||
           err?.message ||
-          "Unable to load Explore.",
-      );
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+          "Unable to load Explore.";
+
+        setError(errorMessage);
+
+        if (refreshing) {
+          toast.error("Refresh Failed", errorMessage);
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [refreshing, toast],
+  );
 
   /* ======================================================================== */
   /* INITIAL LOAD                                                             */

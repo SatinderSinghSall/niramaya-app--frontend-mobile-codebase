@@ -33,6 +33,8 @@ import {
 
 import type { HealthProfile } from "@/types/healthProfile";
 
+import useToast from "@/components/toast/useToast";
+
 /* ==========================================================================
    COLORS
 ========================================================================== */
@@ -1148,6 +1150,8 @@ function LoadingScreen() {
 ========================================================================== */
 
 export default function HealthProfileEditScreen() {
+  const toast = useToast();
+
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [profile, setProfile] = useState<HealthProfile | null>(null);
@@ -1234,8 +1238,9 @@ export default function HealthProfileEditScreen() {
           await loadProfile();
         }
 
-        Alert.alert(
-          "Changes saved",
+        // Success toast
+        toast.success(
+          "Changes Saved",
           `${activeMeta.title} has been updated successfully.`,
         );
       } catch (err: any) {
@@ -1247,12 +1252,13 @@ export default function HealthProfileEditScreen() {
 
         setError(message);
 
-        Alert.alert("Unable to save", message);
+        // Error toast
+        toast.error("Unable to Save", message);
       } finally {
         setSaving(false);
       }
     },
-    [activeMeta.title, loadProfile, saving],
+    [activeMeta.title, loadProfile, saving, toast],
   );
 
   const goPrevious = () => {

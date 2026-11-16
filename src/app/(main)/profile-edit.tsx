@@ -25,7 +25,11 @@ import { getProfile, updateProfile } from "../../services/profile.service";
 
 import { UserProfile } from "../../types/profile";
 
+import useToast from "@/components/toast/useToast";
+
 export default function ProfileEditScreen() {
+  const toast = useToast();
+
   const insets = useSafeAreaInsets();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -90,6 +94,11 @@ export default function ProfileEditScreen() {
 
       setProfile(updated);
 
+      toast.success(
+        "Profile Updated",
+        "Your personal information has been updated successfully.",
+      );
+
       Alert.alert(
         "Profile updated",
         "Your personal information has been updated successfully.",
@@ -102,6 +111,12 @@ export default function ProfileEditScreen() {
       );
     } catch (error: any) {
       console.error("Profile update failed:", error);
+
+      const errorMessage =
+        error?.response?.data?.message ??
+        "Please check your information and try again.";
+
+      toast.error("Profile Update Failed", errorMessage);
 
       Alert.alert(
         "Couldn't update profile",

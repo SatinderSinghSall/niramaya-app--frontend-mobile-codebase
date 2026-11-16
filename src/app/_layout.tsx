@@ -13,6 +13,8 @@ import AppUpdateGate from "../components/common/AppUpdateGate";
 import MaintenanceGate from "../components/common/MaintenanceGate";
 import FloatingDisclaimerCTA from "../components/common/FloatingDisclaimerCTA";
 
+import { ToastProvider } from "@/components/toast/ToastProvider";
+
 interface AppContentProps {
   networkChecked: boolean;
   isOffline: boolean;
@@ -112,16 +114,18 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <OnboardingProvider>
-        <MaintenanceGate>
-          <AppContent
-            networkChecked={networkChecked}
-            isOffline={isOffline}
-            offlineModalVisible={offlineModalVisible}
-            onCloseOfflineModal={() => {
-              setOfflineModalVisible(false);
-            }}
-          />
-        </MaintenanceGate>
+        <ToastProvider>
+          <MaintenanceGate>
+            <AppContent
+              networkChecked={networkChecked}
+              isOffline={isOffline}
+              offlineModalVisible={offlineModalVisible}
+              onCloseOfflineModal={() => {
+                setOfflineModalVisible(false);
+              }}
+            />
+          </MaintenanceGate>
+        </ToastProvider>
       </OnboardingProvider>
     </AuthProvider>
   );

@@ -14,6 +14,8 @@ import { router, useFocusEffect } from "expo-router";
 import { getHealthProfile } from "@/services/healthProfile.service";
 import { HealthProfile } from "@/types/healthProfile";
 
+import useToast from "@/components/toast/useToast";
+
 /* ==========================================================================
    COLORS
 ========================================================================== */
@@ -551,6 +553,8 @@ function ProfileLoading() {
 ========================================================================== */
 
 export default function HealthProfileScreen() {
+  const toast = useToast();
+
   const [profile, setProfile] = useState<HealthProfile | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -558,34 +562,49 @@ export default function HealthProfileScreen() {
   const [error, setError] = useState("");
   const [profileNotCreated, setProfileNotCreated] = useState(false);
 
-  const loadProfile = useCallback(async () => {
-    try {
-      setError("");
-      setProfileNotCreated(false);
+  const loadProfile = useCallback(
+    async (showRefreshing = false) => {
+      try {
+        setError("");
+        setProfileNotCreated(false);
 
-      const data = await getHealthProfile();
+        const data = await getHealthProfile();
 
-      setProfile(data ?? null);
-    } catch (err: any) {
-      if (err?.response?.status === 404) {
-        // A missing health profile is a normal onboarding state.
-        setProfile(null);
-        setProfileNotCreated(true);
-      } else {
-        console.error("Health profile loading error:", err);
+        setProfile(data ?? null);
 
-        setProfile(null);
-        setError(
-          err?.response?.data?.message ||
+        if (showRefreshing) {
+          toast.success(
+            "Health Profile Updated",
+            "Your health profile has been refreshed successfully.",
+          );
+        }
+      } catch (err: any) {
+        if (err?.response?.status === 404) {
+          // A missing health profile is a normal onboarding state.
+          setProfile(null);
+          setProfileNotCreated(true);
+        } else {
+          console.error("Health profile loading error:", err);
+
+          const errorMessage =
+            err?.response?.data?.message ||
             err?.message ||
-            "Unable to load your health profile.",
-        );
+            "Unable to load your health profile.";
+
+          setProfile(null);
+          setError(errorMessage);
+
+          if (showRefreshing) {
+            toast.error("Refresh Failed", errorMessage);
+          }
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+    },
+    [toast],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -597,7 +616,7 @@ export default function HealthProfileScreen() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadProfile();
+    await loadProfile(true);
   };
 
   if (loading) {

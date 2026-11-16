@@ -24,6 +24,8 @@ import {
 
 import { ExploreItem } from "@/types/explore";
 
+import useToast from "@/components/toast/useToast";
+
 /* -------------------------------------------------------------------------- */
 
 /* Colors                                                                     */
@@ -1743,6 +1745,8 @@ function AyurvedaDetailError({
 /* -------------------------------------------------------------------------- */
 
 export default function AyurvedaDetailScreen() {
+  const toast = useToast();
+
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [item, setItem] = useState<AyurvedaDetailData | null>(null);
@@ -1754,12 +1758,10 @@ export default function AyurvedaDetailScreen() {
   const [error, setError] = useState("");
 
   const loadAyurveda = useCallback(
-    async (showLoader = true) => {
+    async (showLoader = true, showRefreshToast = false) => {
       if (!id) {
         setError("Ayurveda content not found.");
-
         setLoading(false);
-
         return;
       }
 
@@ -1774,6 +1776,13 @@ export default function AyurvedaDetailScreen() {
 
         setItem(data as AyurvedaDetailData);
 
+        if (showRefreshToast) {
+          toast.success(
+            "Ayurveda Updated",
+            "The Ayurveda content has been refreshed successfully.",
+          );
+        }
+
         incrementAyurvedaViewCount(String(id))
           .then((viewCount) => {
             if (typeof viewCount === "number") {
@@ -1782,26 +1791,28 @@ export default function AyurvedaDetailScreen() {
               );
             }
           })
-
           .catch(() => {
             // View tracking must never block the detail page.
           });
       } catch (err: any) {
         console.error("Ayurveda detail loading error:", err);
 
-        setError(
+        const errorMessage =
           err?.response?.data?.message ||
-            err?.message ||
-            "Unable to load this Ayurveda content.",
-        );
+          err?.message ||
+          "Unable to load this Ayurveda content.";
+
+        setError(errorMessage);
+
+        if (showRefreshToast) {
+          toast.error("Refresh Failed", errorMessage);
+        }
       } finally {
         setLoading(false);
-
         setRefreshing(false);
       }
     },
-
-    [id],
+    [id, toast],
   );
 
   useEffect(() => {
@@ -1811,7 +1822,7 @@ export default function AyurvedaDetailScreen() {
   const handleRefresh = async () => {
     setRefreshing(true);
 
-    await loadAyurveda(false);
+    await loadAyurveda(false, true);
   };
 
   const handleShare = useCallback(async () => {

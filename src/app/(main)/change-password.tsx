@@ -23,7 +23,11 @@ import { router } from "expo-router";
 
 import { changePassword } from "../../services/profile.service";
 
+import useToast from "@/components/toast/useToast";
+
 export default function ChangePasswordScreen() {
+  const toast = useToast();
+
   const insets = useSafeAreaInsets();
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -77,6 +81,11 @@ export default function ChangePasswordScreen() {
         newPassword,
       });
 
+      toast.success(
+        "Password Changed",
+        "Your password has been changed successfully. Please log in again.",
+      );
+
       Alert.alert(
         "Password changed",
         "Your password has been changed successfully. Please log in again.",
@@ -98,6 +107,12 @@ export default function ChangePasswordScreen() {
       );
     } catch (error: any) {
       console.error("Password change failed:", error);
+
+      const errorMessage =
+        error?.response?.data?.message ??
+        "Please check your current password and try again.";
+
+      toast.error("Password Change Failed", errorMessage);
 
       Alert.alert(
         "Couldn't change password",

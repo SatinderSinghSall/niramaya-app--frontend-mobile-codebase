@@ -22,6 +22,8 @@ import type {
   ConsultationStatus,
 } from "../../../types/consultation";
 
+import useToast from "@/components/toast/useToast";
+
 /* ============================================================
    COLORS
 ============================================================ */
@@ -195,6 +197,8 @@ const getTypeConfig = (type: Consultation["consultationType"]) => {
 ============================================================ */
 
 export default function ConsultationDetailScreen() {
+  const toast = useToast();
+
   const params = useLocalSearchParams<{ id: string | string[] }>();
 
   const consultationId = Array.isArray(params.id) ? params.id[0] : params.id;

@@ -15,6 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { deleteProgress, getProgressById } from "@/services/progress.service";
 import { ProgressEntry } from "@/types/progress";
 
+import useToast from "@/components/toast/useToast";
+
 const COLORS = {
   background: "#F7F5EF",
   surface: "#FFFFFF",
@@ -749,6 +751,8 @@ function DeleteModal({
 }
 
 export default function ProgressDetailScreen() {
+  const toast = useToast();
+
   const params = useLocalSearchParams<{ id: string }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -808,6 +812,12 @@ export default function ProgressDetailScreen() {
     try {
       setDeleting(true);
       await deleteProgress(progress._id);
+
+      toast.success(
+        "Progress Deleted",
+        "Your progress entry has been removed.",
+      );
+
       setShowDeleteModal(false);
       router.replace("/progress" as any);
     } catch (err: any) {
@@ -816,6 +826,10 @@ export default function ProgressDetailScreen() {
       setError(
         err?.response?.data?.message ||
           "Unable to delete this progress entry. Please try again.",
+      );
+      toast.error(
+        "Delete Failed",
+        "Unable to delete this progress entry. Please try again.",
       );
     } finally {
       setDeleting(false);
