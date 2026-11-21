@@ -2,17 +2,17 @@
   "expo": {
     "name": "Niramaya",
     "slug": "niramaya",
-    "version": "1.1.12",
+    "version": "1.1.13",
     "orientation": "portrait",
     "icon": "./assets/images/main-app-icon.png",
     "scheme": "niramaya",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "buildNumber": "14",
+      "buildNumber": "15",
       "icon": "./assets/images/main-app-icon.png"
     },
     "android": {
-      "versionCode": 14,
+      "versionCode": 15,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/main-app-icon.png",
