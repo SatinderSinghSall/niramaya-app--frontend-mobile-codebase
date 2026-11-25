@@ -1129,7 +1129,6 @@ export default function HomeScreen() {
         {/* ================================================================
             HEADER
         ================================================================ */}
-
         <HomeHeader
           firstName={firstName}
           lastName={lastName}
@@ -1139,34 +1138,32 @@ export default function HomeScreen() {
         {/* ================================================================
             HERO
         ================================================================ */}
-
         <HeroSection />
 
         {/* ================================================================
             DAILY THOUGHT
         ================================================================ */}
-
         <DailyThought />
 
         {/* ================================================================
             START YOUR DAY
         ================================================================ */}
-
         <StartDayButton />
 
         {/* ================================================================
             DAILY PROGRESS
         ================================================================ */}
 
+        {/* TODO: Uncomment this feature after app in Production. */}
         {/* Health Profile CTA */}
-        <HealthProfileCTA />
+        {/* <HealthProfileCTA /> */}
+        {/* TODO: Uncomment this feature after app in Production. */}
 
         <ProgressCTA />
 
         {/* ================================================================
             RECOMMENDED PRACTICES
         ================================================================ */}
-
         <RecommendedPractices
           yoga={homeYoga}
           ayurveda={homeAyurveda}
@@ -1183,7 +1180,6 @@ export default function HomeScreen() {
         {/* ================================================================
             DAILY WISDOM
         ================================================================ */}
-
         <View className="mt-8 mb-4">
           <SectionHeader
             title="Daily Wisdom"
@@ -1199,34 +1195,34 @@ export default function HomeScreen() {
         {/* Health Tip CTA */}
         <HealthWellnessTipsCTA />
 
+        {/*  TODO: Uncomment this feature after app in Production. */}
         {/*Consultation CTA  */}
-        <ConsultationCTA />
+        {/* <ConsultationCTA /> */}
+        {/* TODO: Uncomment this feature after app in Production. */}
 
         {/* ================================================================
             POPULAR PRACTICES
         ================================================================ */}
-
         <PopularPractices />
 
         {/* ================================================================
             WELLNESS SHORTS
         ================================================================ */}
-
         <WellnessShorts />
 
+        {/* TODO: Uncomment this feature after app in Production. */}
         {/* Dashboard Progress */}
-        {dashboard ? <DashboardProgress data={dashboard} /> : null}
+        {/* {dashboard ? <DashboardProgress data={dashboard} /> : null} */}
+        {/* TODO: Uncomment this feature after app in Production. */}
 
         {/* ================================================================
             FEATURE BANNER
         ================================================================ */}
-
         <FeatureBanner />
 
         {/* ================================================================
             FOOTER
         ================================================================ */}
-
         <HomeFooter />
       </ScrollView>
     </SafeAreaView>
