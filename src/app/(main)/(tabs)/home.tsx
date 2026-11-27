@@ -1154,10 +1154,8 @@ export default function HomeScreen() {
             DAILY PROGRESS
         ================================================================ */}
 
-        {/* TODO: Uncomment this feature after app in Production. */}
         {/* Health Profile CTA */}
-        {/* <HealthProfileCTA /> */}
-        {/* TODO: Uncomment this feature after app in Production. */}
+        <HealthProfileCTA />
 
         <ProgressCTA />
 
@@ -1195,10 +1193,8 @@ export default function HomeScreen() {
         {/* Health Tip CTA */}
         <HealthWellnessTipsCTA />
 
-        {/*  TODO: Uncomment this feature after app in Production. */}
         {/*Consultation CTA  */}
-        {/* <ConsultationCTA /> */}
-        {/* TODO: Uncomment this feature after app in Production. */}
+        <ConsultationCTA />
 
         {/* ================================================================
             POPULAR PRACTICES
@@ -1210,10 +1206,8 @@ export default function HomeScreen() {
         ================================================================ */}
         <WellnessShorts />
 
-        {/* TODO: Uncomment this feature after app in Production. */}
         {/* Dashboard Progress */}
-        {/* {dashboard ? <DashboardProgress data={dashboard} /> : null} */}
-        {/* TODO: Uncomment this feature after app in Production. */}
+        {dashboard ? <DashboardProgress data={dashboard} /> : null}
 
         {/* ================================================================
             FEATURE BANNER

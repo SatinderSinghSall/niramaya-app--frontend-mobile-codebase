@@ -1543,10 +1543,9 @@ export default function ExploreScreen() {
                 </View>
               ) : null}
 
-              {/* TODO: Uncomment this feature after app in Production. */}
               {/* Consultation CTA */}
-              {/* <ConsultationCTA /> */}
-              {/* TODO: Uncomment this feature after app in Production. */}
+              <ConsultationCTA />
+
               {/* ================================================================ */}
               {/* AYURVEDA                                                         */}
               {/* ================================================================ */}
@@ -1592,10 +1591,8 @@ export default function ExploreScreen() {
                 </View>
               ) : null}
 
-              {/* TODO: Uncomment this feature after app in Production. */}
               {/* Health History CTA */}
-              {/* <HealthProfileCTA /> */}
-              {/* TODO: Uncomment this feature after app in Production. */}
+              <HealthProfileCTA />
 
               {/* Health & Wellness Tip CTA */}
               <HealthWellnessTipsCTA />

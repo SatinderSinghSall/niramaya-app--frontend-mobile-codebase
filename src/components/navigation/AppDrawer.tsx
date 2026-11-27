@@ -372,8 +372,7 @@ export default function AppDrawer() {
               />
 
               <DrawerSectionTitle>PERSONAL</DrawerSectionTitle>
-              {/* TODO: Uncomment this feature after app in Production. */}
-              {/* <DrawerItem
+              <DrawerItem
                 label="Health Profile"
                 icon="person-circle-outline"
                 active={isActive("/health-profile")}
@@ -384,8 +383,7 @@ export default function AppDrawer() {
                 icon="medkit-outline"
                 active={isActive("/consultation")}
                 onPress={() => navigate("/(main)/consultation")}
-              /> */}
-              {/* TODO: Uncomment this feature after app in Production. */}
+              />
               <DrawerItem
                 label="Notifications"
                 icon="notifications-outline"
